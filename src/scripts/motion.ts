@@ -198,18 +198,19 @@ document.querySelectorAll<HTMLButtonElement>('[data-copy-mail]').forEach((btn) =
 // ------------------------------------------------------------ fondus d'images
 // Chaque diaporama avance toutes les 4,5 s, uniquement quand il est à l'écran.
 document.querySelectorAll<HTMLElement>('[data-slides]').forEach((box) => {
-  const imgs = [...box.querySelectorAll<HTMLImageElement>('.slides__img')];
+  const items = [...box.querySelectorAll<HTMLElement>('.slides__item')];
   const dots = [...box.querySelectorAll<HTMLElement>('.slides__dots span')];
-  if (imgs.length < 2 || reduced) return;
+  if (items.length < 2 || reduced) return;
+  const lazy = (el: HTMLElement) => el.querySelectorAll('img').forEach((img) => (img.loading = 'eager'));
   let i = 0;
   let timer = 0;
   const show = (k: number) => {
-    imgs[i].classList.remove('is-active');
+    items[i].classList.remove('is-active');
     dots[i]?.classList.remove('is-active');
-    i = k % imgs.length;
-    imgs[i].loading = 'eager';
-    imgs[(i + 1) % imgs.length].loading = 'eager';   // précharge la suivante
-    imgs[i].classList.add('is-active');
+    i = k % items.length;
+    lazy(items[i]);
+    lazy(items[(i + 1) % items.length]);   // précharge la suivante
+    items[i].classList.add('is-active');
     dots[i]?.classList.add('is-active');
   };
   new IntersectionObserver(([entry]) => {

@@ -30,20 +30,21 @@ def load(name):
     return q.astype(np.float64) / 32767
 
 
-def render(name, ry, rx, zoom, w=1600, h=1000):
+def render(name, ry, rx, zoom, w=1600, h=1000, dist=3.2):
+    """dist : distance de la caméra. Plus elle est grande, moins la perspective déforme."""
     p = load(name)
     a, b = math.radians(ry), math.radians(rx)
     Ry = np.array([[math.cos(a), 0, math.sin(a)], [0, 1, 0], [-math.sin(a), 0, math.cos(a)]])
     Rx = np.array([[1, 0, 0], [0, math.cos(b), -math.sin(b)], [0, math.sin(b), math.cos(b)]])
     p = p @ (Rx @ Ry).T
-    z = p[:, 2] + 3.2
-    f = h * 0.95 * zoom
+    z = p[:, 2] + dist
+    f = h * 0.95 * zoom * dist / 3.2
     sx = (w / 2 + p[:, 0] * f / z * 1.0).astype(int)
     sy = (h / 2 - p[:, 1] * f / z).astype(int)
 
     t = np.clip((p[:, 0] + p[:, 1]) * 0.35 + 0.5, 0, 1)[:, None]
     col = np.where(t < 0.5, CYAN + (VIOLET - CYAN) * (t * 2), VIOLET + (MAGENTA - VIOLET) * ((t - 0.5) * 2))
-    depth = np.clip(1.25 - (z - 2.2) / 2.2, 0.35, 1.2)[:, None]
+    depth = np.clip(1.25 - (z - dist + 1.0) / 2.2, 0.35, 1.2)[:, None]
 
     acc = np.zeros((h, w, 3))
     ok = (sx >= 0) & (sx < w) & (sy >= 0) & (sy < h)
@@ -68,7 +69,17 @@ def render(name, ry, rx, zoom, w=1600, h=1000):
     return Image.fromarray(np.clip(img, 0, 255).astype(np.uint8))
 
 
+def render_og():
+    """Image de partage (Open Graph, 1200x630) : la tête de face, caméra éloignée
+    pour des proportions naturelles. En JPG : reconnu par toutes les plateformes."""
+    im = render("head", 0, 0, 1.36, w=1200, h=630, dist=11)
+    path = os.path.join(OUT, "og-image.jpg")
+    im.save(path, "JPEG", quality=88, optimize=True, progressive=True)
+    print(f"  og-image.jpg ({os.path.getsize(path) // 1024} KB)")
+
+
 if __name__ == "__main__":
+    render_og()
     for out, (shape, ry, rx, zoom) in COVERS.items():
         im = render(shape, ry, rx, zoom)
         path = os.path.join(OUT, f"{out}.webp")

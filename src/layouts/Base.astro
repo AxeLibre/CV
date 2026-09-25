@@ -14,7 +14,7 @@ interface Props {
   alternate?: string;      // chemin de la page équivalente dans l'autre langue
 }
 
-const { lang = 'fr', title, description, image = 'cover-morph.webp', alternate } = Astro.props;
+const { lang = 'fr', title, description, image = 'og-image.jpg', alternate } = Astro.props;
 const c = t[lang];
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 const home = lang === 'fr' ? base : `${base}en/`;
@@ -44,6 +44,17 @@ const anchor = (id: string) => (onHome ? `#${id}` : `${home}#${id}`);
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={desc} />
     <meta property="og:image" content={ogImage} />
+    {image === 'og-image.jpg' && (
+      <>
+        <meta property="og:image:type" content="image/jpeg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={lang === 'fr' ? 'Tête holographique en particules, emblème du portfolio' : 'Holographic particle head, portfolio emblem'} />
+      </>
+    )}
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="Axel Lasalvia" />
+    <meta name="twitter:image" content={ogImage} />
     <meta property="og:locale" content={lang === 'fr' ? 'fr_FR' : 'en_US'} />
     <meta name="twitter:card" content="summary_large_image" />
     <script is:inline>document.documentElement.classList.add('js');</script>

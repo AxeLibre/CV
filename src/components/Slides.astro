@@ -1,21 +1,29 @@
 ---
 // Fondu enchaîné d'images (avec léger zoom lent) — remplace les GIF animés.
+// Une image peut porter un badge (logo du jeu, etc.) qui apparaît et disparaît avec elle.
 // L'animation est pilotée par scripts/motion.ts et ne tourne que si le bloc est visible.
-interface Props { slides: { src: string; alt: string }[]; eager?: boolean; }
+interface Slide { src: string; alt: string; badge?: string; badgeAlt?: string; }
+interface Props { slides: Slide[]; eager?: boolean; }
 const { slides, eager = false } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 
 <div class="slides" data-slides>
   {slides.map((s, i) => (
-    <img
-      class:list={['slides__img', { 'is-active': i === 0 }]}
-      src={`${base}media/${s.src}`}
-      alt={i === 0 ? s.alt : ''}
-      aria-hidden={i === 0 ? undefined : 'true'}
-      loading={eager && i === 0 ? 'eager' : 'lazy'}
-      decoding="async"
-    />
+    <div class:list={['slides__item', { 'is-active': i === 0 }]} aria-hidden={i === 0 ? undefined : 'true'}>
+      <img
+        class="slides__img"
+        src={`${base}media/${s.src}`}
+        alt={i === 0 ? s.alt : ''}
+        loading={eager && i === 0 ? 'eager' : 'lazy'}
+        decoding="async"
+      />
+      {s.badge && (
+        <span class="slides__badge">
+          <img src={`${base}media/${s.badge}`} alt={s.badgeAlt ?? ''} loading="lazy" decoding="async" />
+        </span>
+      )}
+    </div>
   ))}
   {slides.length > 1 && (
     <div class="slides__dots" aria-hidden="true">

@@ -79,10 +79,9 @@ export class MorphEngine {
   // pointeur
   private ndc = new Vector2(9, 9);
   private tilt = new Vector2();
-  private lastMove = -10;
-  private touching = false;
   private prevQ = new Vector3();
   private vel = new Vector3();
+  private hadPointer = false;
 
   private dpr = 1;
   private maxDpr = 1;
@@ -120,7 +119,7 @@ export class MorphEngine {
         uRayD: { value: new Vector3(0, 0, -1) },
         uPointerVel: { value: new Vector3() },
         uPointer: { value: 0 },
-        uRadius: { value: 0.36 },
+        uRadius: { value: 0.3 },
         uCalm: { value: opts.reducedMotion ? 1 : 0 },
         uOpacity: { value: 0 },
         uCycF: { value: 0 },
@@ -312,24 +311,18 @@ export class MorphEngine {
   private bindPointer() {
     const set = (x: number, y: number) => {
       this.ndc.set((x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1);
-      this.lastMove = this.elapsed;
     };
     window.addEventListener('pointermove', (e) => set(e.clientX, e.clientY), { passive: true });
-    window.addEventListener('pointerdown', (e) => set(e.clientX, e.clientY), { passive: true });
     window.addEventListener('touchstart', (e) => {
-      this.touching = true;
+      this.hadPointer = false;              // nouveau contact : pas de « saut » de vitesse
       set(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
     window.addEventListener('touchmove', (e) => set(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-    window.addEventListener('touchend', () => (this.touching = false), { passive: true });
-    document.documentElement.addEventListener('mouseleave', () => (this.lastMove = -10));
+    document.documentElement.addEventListener('mouseleave', () => this.ndc.set(9, 9));
   }
 
-  private updatePointer(dt: number, t: number) {
+  private updatePointer(dt: number) {
     const u = this.material.uniforms;
-    const active = this.touching || t - this.lastMove < 2.2;
-    u.uPointer.value = damp(u.uPointer.value, active ? 1 : 0, active ? 6 : 1.5, dt);
-
     this.points.updateMatrixWorld();
     this.inv.copy(this.points.matrixWorld).invert();
     this.raycaster.setFromCamera(this.ndc, this.camera);
@@ -338,14 +331,21 @@ export class MorphEngine {
     u.uRayO.value.copy(o);
     u.uRayD.value.copy(d);
 
-    // vitesse du point le plus proche de l'origine sur le rayon → sillage
+    // vitesse du pointeur dans le repère du modèle : c'est elle qui entraîne les particules
     const q = o.clone().addScaledVector(d, -o.dot(d));
+    const hasPointer = this.ndc.x < 5;
     if (dt > 0) {
-      const v = q.clone().sub(this.prevQ).divideScalar(dt).clampLength(0, 3);
-      this.vel.lerp(v, 1 - Math.exp(-8 * dt));
+      const v = hasPointer && this.hadPointer ? q.clone().sub(this.prevQ).divideScalar(dt).clampLength(0, 4) : new Vector3();
+      // accroche rapide, relâchement lent : les particules reviennent en douceur
+      const k = v.length() > this.vel.length() ? 14 : 3.5;
+      this.vel.lerp(v, 1 - Math.exp(-k * dt));
     }
+    this.hadPointer = hasPointer;
     this.prevQ.copy(q);
-    u.uPointerVel.value.copy(this.vel).multiplyScalar(0.12);
+    u.uPointerVel.value.copy(this.vel).multiplyScalar(0.06).clampLength(0, 0.14);
+    // pas de mouvement, pas de déformation
+    const strength = hasPointer ? Math.min(1, this.vel.length() / 1.2) : 0;
+    u.uPointer.value = damp(u.uPointer.value, strength, 8, dt);
 
     this.tilt.x = damp(this.tilt.x, this.ndc.x > 5 ? 0 : this.ndc.x, 2, dt);
     this.tilt.y = damp(this.tilt.y, this.ndc.y > 5 ? 0 : this.ndc.y, 2, dt);
@@ -449,7 +449,7 @@ export class MorphEngine {
     u.uFlap.value = calm ? 0 : -0.25 + 0.6 * (Math.sin(w) + 0.25 * Math.sin(2 * w));
 
     this.updateCycle(dt);
-    this.updatePointer(dt, t);
+    this.updatePointer(dt);
 
     this.fade = Math.min(1, this.fade + dt / 1.2);
     u.uOpacity.value = this.fade * P.opacity;

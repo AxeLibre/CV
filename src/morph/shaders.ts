@@ -120,23 +120,22 @@ void main(){
   float band = step(abs(p.y - (fract(uTime * 0.61) * 2.0 - 1.0)), 0.04);
   p.x += gw * band * 0.06;
 
-  // --- Interaction souris / doigt : répulsion + tourbillon autour du rayon ---
+  // --- Interaction souris / doigt : les particules proches du pointeur sont
+  //     légèrement entraînées dans le sens du mouvement (effet « accroche »),
+  //     puis reviennent en place quand le pointeur ralentit ou s'arrête.
   vec3 rel = p - uRayO;
-  float along = dot(rel, uRayD);
-  vec3 perp = rel - along * uRayD;
+  vec3 perp = rel - dot(rel, uRayD) * uRayD;
   float d = length(perp);
-  float f = uPointer * pow(1.0 - smoothstep(0.0, uRadius, d), 2.0);
-  vec3 dir = perp / max(d, 1e-4);
-  vec3 swirl = cross(uRayD, dir);
-  p += dir * f * 0.3 + swirl * f * 0.16 + uPointerVel * f * 0.45 - uRayD * f * 0.15;
-  // anneau lumineux au bord de la zone repoussée
-  float rim = uPointer * smoothstep(uRadius * 0.4, uRadius, d) * (1.0 - smoothstep(uRadius, uRadius * 1.6, d));
-  vHot = max(f, rim * 0.8);
+  float fall = 1.0 - smoothstep(0.0, uRadius, d);
+  float f = uPointer * fall * fall;
+  float grip = 0.7 + 0.6 * aSeed;                 // chaque particule accroche plus ou moins
+  p += uPointerVel * f * grip + (perp / max(d, 1e-4)) * f * 0.02;
+  vHot = f * 0.5;
 
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mv;
 
-  float size = uSize * (0.65 + aSeed * 0.7) * (1.0 + f * 1.4 + mid * 0.6);
+  float size = uSize * (0.65 + aSeed * 0.7) * (1.0 + f * 0.6 + mid * 0.6);
   gl_PointSize = clamp(size * uPixelRatio / -mv.z, 1.0, 14.0 * uPixelRatio);
 
   // dégradé de marque cyan → violet → magenta selon la diagonale et la graine

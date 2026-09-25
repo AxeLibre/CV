@@ -17,7 +17,7 @@ const projects = defineCollection({
     cover: z.string(),                       // fichier dans public/media
     coverAlt: z.string(),
     gallery: z.array(z.object({ src: z.string(), alt: z.string(), caption: z.string().optional() })).default([]),
-    slides: z.array(z.object({ src: z.string(), alt: z.string() })).default([]),   // fondu d'images (remplace l'image fixe)
+    slides: z.array(z.object({ src: z.string(), alt: z.string(), badge: z.string().optional(), badgeAlt: z.string().optional() })).default([]),   // fondu d'images (remplace l'image fixe)
     logo: z.string().optional(),             // logo du projet (public/media), affiché dans l'en-tête
     video: z.string().optional(),            // identifiant YouTube : remplace l'image en tête de page
     videoThumb: z.string().optional(),       // miniature locale de la vidéo (public/media)
