@@ -1,0 +1,116 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import Slides from '../../components/Slides.astro';
+import { t } from '../../data/site';
+
+export async function getStaticPaths() {
+  const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+  return projects.map((project, i) => ({
+    params: { slug: project.id },
+    props: { project, next: projects[(i + 1) % projects.length] },
+  }));
+}
+
+interface Props { project: CollectionEntry<'projects'>; next: CollectionEntry<'projects'>; }
+const { project, next } = Astro.props;
+const d = project.data;
+const { Content } = await render(project);
+const c = t.fr.project;
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const ext = (href: string) => /^https?:/.test(href);
+---
+
+<Base title={d.title} description={d.summary} image={d.cover}>
+  <section class="section p-hero" data-shape={d.shape} data-model="hero" data-hero aria-labelledby="p-title">
+    <div class="wrap">
+      <a class="back" href={`${base}#projets`} data-reveal><Icon name="arrow" /> {c.back}</a>
+      {d.logo && <img class="p-logo" src={`${base}media/${d.logo}`} alt={`Logo ${d.title}`} width="480" height="480" data-reveal />}
+      <p class="eyebrow" data-reveal><span class="eyebrow__bar"></span>{d.tagline}</p>
+      <h1 class="h-1" id="p-title" data-split-chars>{d.title}</h1>
+      <p class="lead" data-reveal style="margin-top:22px">{d.summary}</p>
+      {d.links.length > 0 && (
+        <div class="hero__ctas" data-reveal>
+          {d.links.map((l, i) => (
+            <a class:list={['btn', { 'btn--primary': i === 0 }]} href={l.href} target={ext(l.href) ? '_blank' : undefined} rel={ext(l.href) ? 'noopener' : undefined} data-magnetic>
+              {l.label} <Icon name={ext(l.href) ? 'external' : 'arrow'} />
+            </a>
+          ))}
+        </div>
+      )}
+      {d.shape === 'milan' && (
+        <p class="cycle-label" data-cycle-label aria-live="polite">
+        <i></i><span data-cycle-text></span><span class="cycle-label__src" data-cycle-src></span>
+      </p>
+      )}
+      <dl class="p-meta" data-reveal>
+        <div><dt>{c.role}</dt><dd>{d.role}</dd></div>
+        <div><dt>{c.year}</dt><dd>{d.year ?? '—'}</dd></div>
+        <div><dt>{c.stack}</dt><dd>{d.stack.join(' · ')}</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <div data-shape={d.shape} data-model="dim">
+    <div class="wrap">
+      {d.video ? (
+        <div class="video" data-reveal>
+          <button type="button" data-youtube={d.video} aria-label={`${c.videoLoad} : ${d.title}`}>
+            <img src={`${base}media/${d.videoThumb ?? d.cover}`} alt="" width="1280" height="720" decoding="async" />
+            <span class="video__play"><Icon name="play" /> {c.videoLoad}</span>
+          </button>
+        </div>
+      ) : d.slides.length > 1 ? (
+        <figure class="p-cover p-cover--slides" data-reveal>
+          <Slides slides={d.slides} eager />
+        </figure>
+      ) : (
+        <figure class="p-cover" data-reveal>
+          <img src={`${base}media/${d.cover}`} alt={d.coverAlt} width="1600" height="1000" decoding="async" />
+        </figure>
+      )}
+
+      <div class="p-body">
+        <article class="prose">
+          <Content />
+        </article>
+        <aside class="aside">
+          {d.stats.length > 0 && (
+            <div data-reveal>
+              <div class="stats">
+                {d.stats.map((s) => <div class="stat"><b class="gradient-text">{s.value}</b><span>{s.label}</span></div>)}
+              </div>
+            </div>
+          )}
+          <div data-reveal>
+            <h3>{c.skills}</h3>
+            <div class="card__tags">{d.skills.map((s) => <span class="chip">{s}</span>)}</div>
+          </div>
+          <div data-reveal>
+            <h3>{c.stack}</h3>
+            <div class="card__tags">{d.stack.map((s) => <span class="chip chip--mono">{s}</span>)}</div>
+          </div>
+        </aside>
+      </div>
+
+      {d.gallery.length > 0 && (
+        <div class="gallery">
+          {d.gallery.map((g) => (
+            <figure data-reveal>
+              <img src={`${base}media/${g.src}`} alt={g.alt} loading="lazy" decoding="async" />
+              {g.caption && <figcaption>{g.caption}</figcaption>}
+            </figure>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <a class="next" href={`${base}projets/${next.id}/`}>
+      <div class="wrap">
+        <p class="eyebrow"><span class="eyebrow__bar"></span>{c.next}</p>
+        <p class="next__title">{next.data.title} <span class="gradient-text">→</span></p>
+      </div>
+    </a>
+  </div>
+</Base>

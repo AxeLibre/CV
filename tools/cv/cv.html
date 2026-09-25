@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>CV Axel LASALVIA — Technicien d'Assistance Informatique</title>
+<meta name="author" content="Axel LASALVIA">
+<style>@font-face { font-family: 'SG'; src: url('../../node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2') format('woff2'); font-weight: 300 700; }
+@font-face { font-family: 'SG'; src: url('../../node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-ext-wght-normal.woff2') format('woff2'); font-weight: 300 700; unicode-range: U+0100-024F, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF; }
+@font-face { font-family: 'JBM'; src: url('../../node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'JBM'; src: url('../../node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2') format('woff2'); font-weight: 700; }
+
+:root {
+  --night: #0A0C18; --ink: #0A0C18; --text: #2B3047; --muted: #6A7090;
+  --line: #E4E6EF; --side-text: #D9DCEA; --side-muted: #8C92AE;
+  --cyan: #22E4FF; --violet: #7B5CFF; --magenta: #FF3FD8;
+  --grad: linear-gradient(90deg, var(--cyan), var(--violet) 55%, var(--magenta));
+}
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+html, body { margin: 0; padding: 0; background: #fff; }
+body { font-family: 'SG', sans-serif; color: var(--text); font-size: 8.9pt; line-height: 1.42; }
+a { color: inherit; text-decoration: none; }
+.page { width: 210mm; height: 297mm; display: grid; grid-template-columns: 68mm 1fr; overflow: hidden; }
+
+/* ------------------------------------------------ colonne gauche */
+.side {
+  position: relative; background: var(--night); color: var(--side-text);
+  padding: 13mm 8mm 10mm 9mm; display: flex; flex-direction: column; gap: 5mm;
+  background-image: radial-gradient(60mm 50mm at 100% 0%, rgba(123,92,255,.28), transparent 70%),
+                    radial-gradient(50mm 60mm at 0% 100%, rgba(34,228,255,.12), transparent 70%);
+}
+.mono { display: flex; align-items: center; gap: 3.2mm; }
+.mono svg { width: 15mm; height: 15mm; }
+.mono span { font-family: 'JBM'; font-size: 6.6pt; letter-spacing: .16em; color: var(--side-muted); text-transform: uppercase; line-height: 1.5; }
+.s-title { font-family: 'JBM'; font-weight: 700; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: var(--cyan); margin: 0 0 2.2mm; display: flex; align-items: center; gap: 2mm; }
+.s-title::before { content: ''; width: 4mm; height: 1.4px; background: var(--grad); }
+.contact { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.6mm; }
+.contact li { display: flex; gap: 2.4mm; align-items: center; font-size: 8.2pt; }
+.contact svg { width: 3.4mm; height: 3.4mm; flex: none; stroke: var(--cyan); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.contact a { border-bottom: 1px solid rgba(34,228,255,.35); }
+.qr { display: flex; gap: 3mm; align-items: center; padding: 2.6mm; border: 1px solid rgba(255,255,255,.12); border-radius: 2.5mm; background: rgba(255,255,255,.03); }
+.qr svg { width: 17mm; height: 17mm; flex: none; }
+.qr p { margin: 0; font-size: 7.4pt; line-height: 1.35; color: var(--side-muted); }
+.qr b { display: block; color: #fff; font-size: 8.4pt; font-weight: 600; margin-bottom: .6mm; }
+.skill { margin-bottom: 2.2mm; }
+.skill:last-child { margin-bottom: 0; }
+.skill h4 { margin: 0 0 .6mm; font-size: 8.4pt; font-weight: 600; color: #fff; }
+.skill p { margin: 0; font-size: 7.8pt; color: var(--side-text); line-height: 1.38; }
+.tags { display: flex; flex-wrap: wrap; gap: 1.2mm; }
+.tags span { font-family: 'JBM'; font-size: 6.8pt; padding: .7mm 1.8mm; border-radius: 99px; border: 1px solid rgba(255,255,255,.18); color: var(--side-text); }
+.plain { margin: 0; font-size: 7.9pt; line-height: 1.45; }
+
+/* ------------------------------------------------ colonne droite */
+.main { padding: 13mm 12mm 10mm 11mm; display: flex; flex-direction: column; gap: 4.6mm; }
+header h1 { margin: 0; font-size: 29pt; line-height: .95; letter-spacing: -.035em; font-weight: 600; color: var(--ink); }
+header h1 span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.role { margin: 2.6mm 0 0; font-size: 12pt; font-weight: 600; color: var(--ink); letter-spacing: -.01em; }
+.role-sub { margin: .8mm 0 0; font-family: 'JBM'; font-size: 7.2pt; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.bar { height: 1.6px; width: 34mm; background: var(--grad); margin-top: 3.4mm; }
+.cta {
+  display: inline-flex; align-items: center; gap: 2mm; margin-top: 3.6mm;
+  padding: 1.6mm 3.4mm; border-radius: 99px; background: var(--night); color: #fff;
+  font-size: 8.3pt; font-weight: 600;
+}
+.cta i { width: 2mm; height: 2mm; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+.cta em { font-style: normal; font-family: 'JBM'; font-weight: 400; font-size: 7.4pt; color: #B9C0DC; }
+.m-title { font-family: 'JBM'; font-weight: 700; font-size: 7.4pt; letter-spacing: .18em; text-transform: uppercase; color: var(--ink); margin: 0 0 2.4mm; display: flex; align-items: center; gap: 2.2mm; }
+.m-title::before { content: ''; width: 5mm; height: 1.6px; background: var(--grad); }
+.m-title::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.profile { margin: 0; font-size: 9.1pt; line-height: 1.5; color: var(--text); }
+.profile strong { color: var(--ink); font-weight: 600; }
+
+.timeline { list-style: none; margin: 0; padding: 0 0 0 5mm; position: relative; }
+.timeline::before { content: ''; position: absolute; left: 1.05mm; top: 1.4mm; bottom: 1.4mm; width: 1px; background: linear-gradient(var(--cyan), var(--violet), var(--magenta)); }
+.timeline > li { position: relative; padding-bottom: 3.2mm; }
+.timeline > li:last-child { padding-bottom: 0; }
+.timeline > li::before { content: ''; position: absolute; left: -5mm; top: 1.05mm; width: 2.1mm; height: 2.1mm; border-radius: 50%; background: #fff; border: 1.6px solid var(--violet); }
+.timeline > li.now::before { background: var(--violet); box-shadow: 0 0 0 1.2mm rgba(123,92,255,.15); }
+.t-head { display: flex; justify-content: space-between; align-items: baseline; gap: 3mm; }
+.t-head h3 { margin: 0; font-size: 9.6pt; font-weight: 600; color: var(--ink); letter-spacing: -.005em; }
+.when { font-family: 'JBM'; font-size: 7pt; letter-spacing: .06em; color: var(--violet); white-space: nowrap; }
+.place { font-size: 8.2pt; color: var(--muted); margin-top: .3mm; }
+.timeline ul { margin: 1mm 0 0; padding-left: 3.6mm; }
+.timeline ul li { font-size: 8.5pt; line-height: 1.42; }
+.timeline ul li::marker { color: var(--violet); }
+
+.projects { display: grid; grid-template-columns: 1fr 1fr; gap: 2.6mm; }
+.project { display: block; padding: 2.6mm 3mm 2.6mm 3.4mm; border: 1px solid var(--line); border-radius: 2.4mm; position: relative; }
+.project::before { content: ''; position: absolute; left: 0; top: 2.6mm; bottom: 2.6mm; width: 1.4px; background: var(--grad); }
+.project h4 { margin: 0; font-size: 9pt; font-weight: 600; color: var(--ink); display: flex; justify-content: space-between; gap: 2mm; }
+.project h4 small { font-family: 'JBM'; font-weight: 400; font-size: 6.6pt; color: var(--violet); white-space: nowrap; }
+.project p { margin: .8mm 0 0; font-size: 7.9pt; line-height: 1.4; color: var(--text); }
+.foot { margin-top: auto; padding-top: 2.4mm; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-family: 'JBM'; font-size: 6.6pt; color: var(--muted); letter-spacing: .04em; }
+.foot a { color: var(--violet); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<aside class="side">
+  <div class="mono">
+    <svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22E4FF"/><stop offset=".55" stop-color="#7B5CFF"/><stop offset="1" stop-color="#FF3FD8"/></linearGradient></defs><rect x="1" y="1" width="46" height="46" rx="11" fill="#141830" stroke="url(#g)" stroke-width="1.2"/><g transform="translate(7.5,40) scale(0.068,-0.068)" fill="url(#g)"><path d="M108 393 c-9 -2 -25 -25 -34 -51 -10 -26 -30 -81 -46 -122 -15 -41 -28 -89 -28 -107 0 -28 3 -33 25 -33 18 0 26 7 31 25 9 35 23 43 84 46 47 3 56 0 65 -18 18 -35 37 -53 56 -53 11 0 19 6 19 13 0 23 -99 270 -116 288 -17 19 -24 21 -56 12z m46 -110 c22 -65 21 -70 -21 -76 -43 -7 -65 6 -41 25 20 17 39 74 31 95 -4 10 -2 14 4 10 6 -4 18 -28 27 -54z M322 238 l3 -153 78 -3 c76 -3 77 -3 77 22 0 23 -4 25 -51 28 l-52 3 -1 125 -1 125 -28 3 -28 3 3 -153z"/></g></svg>
+    <span>Support IT<br>Réseau · 3D · Web</span>
+  </div>
+
+  <section>
+    <h2 class="s-title">Contact</h2>
+    <ul class="contact">
+      <li><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><a href="mailto:axelasalvia@gmail.com">axelasalvia@gmail.com</a></li>
+      <li><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg><a href="tel:+33768286071">07 68 28 60 71</a></li>
+      <li><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Lyon</li>
+      <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><a href="https://axelibre.github.io/CV/">axelibre.github.io/CV</a></li>
+      <li><svg viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg><a href="https://github.com/AxeLibre">github.com/AxeLibre</a></li>
+    </ul>
+  </section>
+
+  <a class="qr" href="https://axelibre.github.io/CV/">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29" shape-rendering="crispEdges"><path stroke="#EEF0F8" d="M0 0.5h7m1 0h1m1 0h1m2 0h3m2 0h3m1 0h7M0 1.5h1m5 0h1m1 0h1m2 0h3m2 0h1m5 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m3 0h3m3 0h1m2 0h2m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h1m2 0h1m2 0h2m1 0h2m1 0h1m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m3 0h3m1 0h1m1 0h1m2 0h1m2 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m2 0h1m3 0h1m1 0h5m2 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h1m1 0h3m2 0h3m2 0h1M0 8.5h1m1 0h2m1 0h3m1 0h3m1 0h1m1 0h1m1 0h2m3 0h1m2 0h1m1 0h2M1 9.5h1m1 0h2m3 0h1m4 0h3m1 0h8m3 0h1M2 10.5h1m2 0h2m2 0h2m1 0h2m2 0h2m2 0h1m1 0h2m2 0h2M0 11.5h1m1 0h1m6 0h1m2 0h1m3 0h1m1 0h7m3 0h1M0 12.5h1m1 0h2m2 0h1m1 0h1m1 0h1m1 0h1m1 0h2m1 0h1m2 0h1m4 0h2M0 13.5h1m3 0h1m2 0h4m3 0h1m1 0h1m2 0h1m2 0h1m3 0h3M0 14.5h1m1 0h3m1 0h1m1 0h1m1 0h4m1 0h6m1 0h2m2 0h3M2 15.5h1m2 0h1m2 0h1m3 0h1m1 0h1m1 0h1m4 0h4m2 0h1M0 16.5h4m1 0h3m1 0h1m4 0h3m2 0h3m1 0h3m1 0h1M1 17.5h2m2 0h1m3 0h1m2 0h1m1 0h1m1 0h2m2 0h2m1 0h1m1 0h3M0 18.5h1m2 0h1m1 0h2m3 0h2m1 0h5m2 0h2m2 0h1m1 0h1M4 19.5h2m2 0h2m3 0h2m2 0h3m2 0h3m1 0h1M1 20.5h2m2 0h5m1 0h4m1 0h1m1 0h9M8 21.5h1m2 0h1m3 0h2m1 0h1m1 0h1m3 0h5M0 22.5h7m1 0h1m2 0h1m2 0h2m3 0h2m1 0h1m1 0h2m1 0h1M0 23.5h1m5 0h1m1 0h3m2 0h3m2 0h1m1 0h1m3 0h2M0 24.5h1m1 0h3m1 0h1m2 0h1m1 0h1m8 0h5m1 0h1m1 0h1M0 25.5h1m1 0h3m1 0h1m1 0h1m1 0h1m6 0h2m2 0h1m2 0h2m1 0h1M0 26.5h1m1 0h3m1 0h1m1 0h1m2 0h1m5 0h2m1 0h1m2 0h1m2 0h1m1 0h1M0 27.5h1m5 0h1m3 0h2m1 0h2m1 0h1m1 0h1m1 0h1m2 0h3m1 0h1M0 28.5h7m1 0h1m2 0h1m3 0h1m4 0h2m1 0h1m3 0h1"/></svg>
+
+    <p><b>CV interactif &amp; projets</b>Scannez ou cliquez pour découvrir le portfolio 3D.</p>
+  </a>
+
+  <section>
+    <h2 class="s-title">Compétences</h2>
+    <div class="skill"><h4>Support &amp; poste de travail</h4><p>Diagnostic et dépannage N1/N2, installation et configuration de postes, montage et réparation matérielle, gestion des incidents et du parc.</p></div>
+    <div class="skill"><h4>Systèmes</h4><p>Active Directory, environnement Windows, outils collaboratifs et bureautiques, sauvegardes.</p></div>
+    <div class="skill"><h4>Réseau &amp; sécurité</h4><p>Déploiement LAN, adressage IP, routeurs et switchs, intervention sur réseau sécurisé, sécurisation des postes, des accès et des données.</p></div>
+    <div class="skill"><h4>Scripts &amp; outils</h4><div class="tags"><span>Python</span><span>Batch</span><span>VBA</span><span>JavaScript</span></div></div>
+    <div class="skill"><h4>3D &amp; web</h4><div class="tags"><span>Blender</span><span>Three.js</span><span>HTML/CSS</span></div></div>
+  </section>
+
+  <section>
+    <h2 class="s-title">Certification</h2>
+    <p class="plain">Cisco Networking Academy</p>
+  </section>
+
+  <section>
+    <h2 class="s-title">Qualités</h2>
+    <p class="plain">Rapide à comprendre · Coopératif · Courtois · Persévérant · Empathique · Esprit d'équipe</p>
+  </section>
+
+  <section>
+    <h2 class="s-title">Centres d'intérêt</h2>
+    <p class="plain">3D et Blender · Développement web · Jeux vidéo (assets publiés sur Steam)</p>
+  </section>
+</aside>
+
+<main class="main">
+  <header>
+    <h1>Axel <span>LASALVIA</span></h1>
+    <p class="role">Technicien d'Assistance Informatique</p>
+    <p class="role-sub">Support N1/N2 · Réseau · Sécurité · Automatisation</p>
+    <div class="bar"></div>
+    <a class="cta" href="https://axelibre.github.io/CV/"><i></i>Portfolio &amp; CV interactif <em>axelibre.github.io/CV ↗</em></a>
+  </header>
+
+  <section>
+    <h2 class="m-title">Profil</h2>
+    <p class="profile">Passionné d'informatique depuis l'enfance, j'ai fait de cette vocation mon métier après <strong>15 ans de relation client</strong>. Formé au métier de <strong>Technicien d'Assistance Informatique</strong>, j'allie des compétences en support, réseau et sécurité à un vrai sens de l'accompagnement des utilisateurs : résoudre la panne, et rassurer la personne qui la subit. J'aime automatiser ce qui peut l'être et je développe mes propres outils.</p>
+  </section>
+
+  <section>
+    <h2 class="m-title">Formation &amp; expérience</h2>
+    <ol class="timeline">
+      <li class="now">
+        <div class="t-head"><h3>Technicien d'Assistance Informatique</h3><span class="when">MARS – DÉC. 2025</span></div>
+        <div class="place">Arkesys · Villeurbanne — Titre professionnel, examen en février 2026</div>
+        <ul>
+          <li>Mise en service d'équipements numériques, installation et configuration de postes</li>
+          <li>Assistance et dépannage des utilisateurs, gestion des incidents</li>
+          <li>Intervention sur l'infrastructure réseau, Active Directory, sécurisation des données</li>
+        </ul>
+      </li>
+      <li>
+        <div class="t-head"><h3>Vendeur, responsable stocks et logistique</h3><span class="when">2018 – 2024</span></div>
+        <div class="place">Superdry · Lyon</div>
+        <ul>
+          <li>Déploiement d'outils informatiques au service de la logistique et de la productivité</li>
+          <li>Formation des nouveaux employés aux outils informatiques et aux procédures</li>
+          <li>Résolution des incidents informatiques courants, suivi des commandes et livraisons</li>
+        </ul>
+      </li>
+      <li>
+        <div class="t-head"><h3>Vendeur polyvalent</h3><span class="when">2009 – 2017</span></div>
+        <div class="place">G-Star Raw Denim · Lyon</div>
+        <ul><li>Conseil client, événements promotionnels, merchandising, formation des nouveaux collaborateurs</li></ul>
+      </li>
+      <li>
+        <div class="t-head"><h3>BEP Vente Action Marchande</h3><span class="when">2005 – 2006</span></div>
+        <div class="place">Institut Carrel · Lyon — et diplôme d'étalagiste, marchandisage visuel</div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2 class="m-title">Projets personnels</h2>
+    <div class="projects">
+      <a class="project" href="https://axelibre.github.io/CV/projets/net-scan/"><h4>NET Scan <small>Python ↗</small></h4><p>Scanner réseau à interface graphique : découverte ARP, fabricants, ports, topologie. Exécutable Windows.</p></a>
+      <a class="project" href="https://bigoo.fr"><h4>Bigoo <small>bigoo.fr ↗</small></h4><p>Application web de gestion locative pour SCI : loyers, quittances, baux, comptabilité. Démo en ligne.</p></a>
+      <a class="project" href="https://axelibre.github.io/place_de_milan-preprod/"><h4>Place de Milan <small>Three.js ↗</small></h4><p>Simulateur d'urbanisme 3D temps réel de la Part-Dieu, à partir de l'open data du Grand Lyon.</p></a>
+      <a class="project" href="https://axelibre.github.io/CV/projets/hologramme/"><h4>Portfolio 3D <small>WebGL ↗</small></h4><p>Site CV interactif : hologramme de particules piloté par le GPU, modèles issus de Blender.</p></a>
+    </div>
+  </section>
+
+  <div class="foot"><span>Axel LASALVIA · CV 2026</span><a href="https://axelibre.github.io/CV/">Tous mes projets sur axelibre.github.io/CV</a></div>
+</main>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+tools/previews/
+tools/sources/*.json
+__pycache__/
+tools/sources/milan/
+tools/cv/preview.png

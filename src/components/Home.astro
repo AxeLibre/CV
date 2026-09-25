@@ -1,0 +1,128 @@
+---
+import { getCollection } from 'astro:content';
+import Icon from './Icon.astro';
+import ProjectCard from './ProjectCard.astro';
+import { t, profile, type Lang } from '../data/site';
+
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const c = t[lang];
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const byId = new Map(projects.map((p) => [p.id, p]));
+const pad = (n: number) => String(n).padStart(2, '0');
+const [first, last] = profile.name.split(' ');
+---
+
+<!-- HERO ---------------------------------------------------------------->
+<section class="section hero" data-shape="head" data-model="hero" data-hero aria-labelledby="hero-title">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow" data-reveal><span class="eyebrow__bar"></span>{c.hero.eyebrow}</p>
+      <h1 class="h-display" id="hero-title">
+        <span class="line"><span class="line__in">{first}</span></span>
+        <span class="line"><span class="line__in gradient-text">{last}</span></span>
+      </h1>
+      <p class="lead" data-reveal>{c.hero.lead}</p>
+      <div class="hero__ctas" data-reveal>
+        <a class="btn btn--primary" href="#projets" data-magnetic>{c.hero.primary} <Icon name="arrow" /></a>
+        <a class="btn" href={`${base}${profile.cv}`} target="_blank" rel="noopener" data-magnetic>
+          {c.hero.secondary} <Icon name="download" />
+        </a>
+      </div>
+    </div>
+  </div>
+  <p class="hero__hint" data-reveal aria-hidden="true">
+    <i></i><span class="hint-mouse">{c.hero.hint}</span><span class="hint-touch">{c.hero.hintTouch}</span>
+  </p>
+  <div class="scroll-cue" aria-hidden="true"><span class="scroll-cue__line"></span>{c.hero.scroll}</div>
+</section>
+
+<!-- CHAPITRES ----------------------------------------------------------->
+{c.chapters.map((ch, i) => (
+  <section class="section section--chapter chapter" id={ch.id} data-shape={ch.shape} data-model="right" aria-labelledby={`${ch.id}-title`}>
+    <div class="wrap">
+      <div class="col chapter__card">
+        <p class="eyebrow" data-reveal>
+          <span class="eyebrow__num">{pad(i + 1)}</span><span class="eyebrow__bar"></span>{ch.label}
+        </p>
+        <h2 class="h-1" id={`${ch.id}-title`} data-split>{ch.title}</h2>
+        <p class="lead" data-reveal>{ch.text}</p>
+        <ul class="skills">
+          {ch.skills.map((s, k) => (
+            <li data-reveal><span>{pad(k + 1)}</span>{s}</li>
+          ))}
+        </ul>
+        <div class="proof" data-reveal>
+          <span class="proof__label">{c.proofLabel}</span>
+          {ch.proof.filter((id) => byId.has(id)).map((id) => (
+            <a class="chip" href={`${base}projets/${id}/`}>{byId.get(id)!.data.title.split(' — ')[0]}</a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+))}
+
+<!-- PROJETS ------------------------------------------------------------->
+<section class="section projects-head" id="projets" data-shape="milan" data-model="right" aria-labelledby="projets-title">
+  <div class="wrap">
+    <div class="col chapter__card">
+      <p class="eyebrow" data-reveal><span class="eyebrow__num">05</span><span class="eyebrow__bar"></span>{c.projects.label}</p>
+      <h2 class="h-1" id="projets-title" data-split>{c.projects.title}</h2>
+      <p class="lead" data-reveal>{c.projects.text} {c.projects.note}</p>
+      <p class="cycle-label" data-cycle-label aria-live="polite">
+        <i></i><span data-cycle-text></span><span class="cycle-label__src" data-cycle-src></span>
+      </p>
+    </div>
+  </div>
+</section>
+<div class="projects" data-shape="milan" data-model="dim">
+  <div class="wrap grid">
+    {projects.map((p, i) => <ProjectCard project={p} index={i} lang={lang} />)}
+  </div>
+</div>
+
+<!-- PARCOURS ------------------------------------------------------------>
+<section class="section section--chapter" id="parcours" data-shape="cube" data-model="right" aria-labelledby="parcours-title">
+  <div class="wrap">
+    <div class="col chapter__card">
+      <p class="eyebrow" data-reveal><span class="eyebrow__num">06</span><span class="eyebrow__bar"></span>{c.path.label}</p>
+      <h2 class="h-1" id="parcours-title" data-split>{c.path.title}</h2>
+      <ol class="timeline">
+        <span class="timeline__fill" aria-hidden="true"></span>
+        {c.path.steps.map((s) => (
+          <li data-reveal>
+            <span class="timeline__when">{s.when}</span>
+            <h3>{s.title}</h3>
+            <span class="timeline__place">{s.place}</span>
+            <p>{s.text}</p>
+          </li>
+        ))}
+      </ol>
+      <p class="lead" data-reveal style="margin-top:32px;font-size:1rem">{c.path.qualities}</p>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT ------------------------------------------------------------->
+<section class="section contact" id="contact" data-shape="heart" data-model="center" aria-labelledby="contact-title">
+  <div class="wrap">
+    <p class="eyebrow" data-reveal><span class="eyebrow__num">07</span><span class="eyebrow__bar"></span>{c.contact.label}</p>
+    <h2 class="h-display" id="contact-title" data-split>{c.contact.title}</h2>
+    <p class="lead" data-reveal>{c.contact.text}</p>
+    <div class="contact__actions" data-reveal>
+      <a class="btn btn--primary" href="#contact" data-mail={profile.email.join('|')} data-magnetic>
+        <Icon name="mail" /> {c.contact.email}
+      </a>
+      <button class="btn" type="button" data-copy-mail={profile.email.join('|')} data-done={c.contact.copied}>
+        <Icon name="copy" /> <span>{c.contact.copy}</span>
+      </button>
+    </div>
+    <div class="contact__links" data-reveal>
+      <a class="chip" href={profile.github} target="_blank" rel="noopener">GitHub ↗</a>
+      <a class="chip" href={profile.steam} target="_blank" rel="noopener">Steam ↗</a>
+      <a class="chip" href={`${base}${profile.cv}`} target="_blank" rel="noopener">{c.contact.cv} ↓</a>
+    </div>
+  </div>
+</section>

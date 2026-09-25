@@ -1,0 +1,125 @@
+---
+import '@fontsource-variable/space-grotesk';
+import '@fontsource/jetbrains-mono/400.css';
+import '../styles/global.css';
+import Logo from '../components/Logo.astro';
+import Icon from '../components/Icon.astro';
+import { t, profile, type Lang } from '../data/site';
+
+interface Props {
+  lang?: Lang;
+  title?: string;
+  description?: string;
+  image?: string;          // fichier dans public/media pour l'aperçu social
+  alternate?: string;      // chemin de la page équivalente dans l'autre langue
+}
+
+const { lang = 'fr', title, description, image = 'cover-morph.webp', alternate } = Astro.props;
+const c = t[lang];
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const home = lang === 'fr' ? base : `${base}en/`;
+const pageTitle = title ? `${title} · Axel Lasalvia` : c.meta.title;
+const desc = description ?? c.meta.description;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(`${base}media/${image}`, Astro.site);
+const frHref = lang === 'fr' ? Astro.url.pathname : alternate ?? base;
+const enHref = lang === 'en' ? Astro.url.pathname : alternate ?? `${base}en/`;
+const onHome = Astro.url.pathname.replace(/\/$/, '') === home.replace(/\/$/, '');
+const anchor = (id: string) => (onHome ? `#${id}` : `${home}#${id}`);
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={desc} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
+    <meta name="theme-color" content="#05060c" />
+    <link rel="alternate" hreflang="fr" href={new URL(frHref, Astro.site)} />
+    <link rel="alternate" hreflang="en" href={new URL(enHref, Astro.site)} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content={lang === 'fr' ? 'fr_FR' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: profile.name,
+      jobTitle: lang === 'fr' ? "Technicien d'assistance informatique" : 'IT support technician',
+      address: { '@type': 'PostalAddress', addressLocality: 'Lyon', addressCountry: 'FR' },
+      sameAs: [profile.github, profile.steam],
+      url: new URL(base, Astro.site).toString(),
+    })} />
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href="#contenu">{lang === 'fr' ? 'Aller au contenu' : 'Skip to content'}</a>
+    <canvas id="stage" aria-hidden="true"></canvas>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="nav">
+      <div class="wrap nav__inner">
+        <a class="brand" href={home} aria-label={`${profile.name}, ${lang === 'fr' ? 'accueil' : 'home'}`}>
+          <span class="brand__mark"><Logo /></span>
+          <span class="brand__name">{profile.name}</span>
+        </a>
+        <nav class="nav__links" aria-label={lang === 'fr' ? 'Navigation principale' : 'Main navigation'}>
+          <a href={anchor('support')}>{c.nav.skills}</a>
+          <a href={anchor('projets')}>{c.nav.projects}</a>
+          <a href={anchor('parcours')}>{c.nav.path}</a>
+          <a href={anchor('contact')}>{c.nav.contact}</a>
+        </nav>
+        <div class="nav__tools">
+          <div class="lang" role="group" aria-label="Langue / Language">
+            <a href={frHref} hreflang="fr" lang="fr" aria-current={lang === 'fr' ? 'page' : undefined}>FR</a>
+            <a href={enHref} hreflang="en" lang="en" aria-current={lang === 'en' ? 'page' : undefined}>EN</a>
+          </div>
+          <a class="btn nav__cv" href={`${base}${profile.cv}`} target="_blank" rel="noopener">
+            {c.nav.cv} <Icon name="download" />
+          </a>
+          <button class="burger" type="button" aria-expanded="false" aria-controls="menu" aria-label={c.nav.menu}>
+            <span></span><span></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="menu" id="menu">
+      <ol>
+        <li><a href={anchor('support')}>{c.nav.skills}</a></li>
+        <li><a href={anchor('projets')}>{c.nav.projects}</a></li>
+        <li><a href={anchor('parcours')}>{c.nav.path}</a></li>
+        <li><a href={anchor('contact')}>{c.nav.contact}</a></li>
+      </ol>
+      <div class="menu__foot">
+        <a class="btn" href={`${base}${profile.cv}`} target="_blank" rel="noopener">{c.nav.cv} <Icon name="download" /></a>
+        <a class="btn" href={profile.github} target="_blank" rel="noopener">GitHub <Icon name="external" /></a>
+      </div>
+    </div>
+
+    <main id="contenu">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>© {new Date().getFullYear()} · {c.footer.made}</span>
+        <a href="#contenu">{c.footer.top} ↑</a>
+      </div>
+    </footer>
+
+    <div class="cursor" aria-hidden="true"></div>
+
+    <script>
+      import '../scripts/motion';
+      // Three.js est chargé à part : le texte et l'interface sont interactifs sans l'attendre
+      if (document.querySelector('[data-shape]')) import('../morph/stage').then((m) => m.initStage());
+    </script>
+  </body>
+</html>

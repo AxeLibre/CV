@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+---
+
+<Base title="Page introuvable">
+  <section class="section hero" data-shape="cube" data-model="hero" data-hero>
+    <div class="wrap">
+      <div class="col">
+        <p class="eyebrow" data-reveal><span class="eyebrow__bar"></span>Erreur 404</p>
+        <h1 class="h-display" data-split-chars>Perdu&nbsp;?</h1>
+        <p class="lead" data-reveal>Cette page n'existe pas (ou plus). Les particules, elles, sont toujours là.</p>
+        <div class="hero__ctas" data-reveal>
+          <a class="btn btn--primary" href={base}>Retour à l'accueil <Icon name="arrow" /></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

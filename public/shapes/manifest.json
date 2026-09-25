@@ -1,0 +1,68 @@
+{
+  "milan": {
+    "colors": true,
+    "tilt": 0.5,
+    "compose": {
+      "base": "milan",
+      "count": 24576,
+      "blockCount": 8192,
+      "ground": -0.09354221683259042,
+      "footColor": [
+        0.1803921568627451,
+        0.9098039215686274,
+        1.0
+      ],
+      "variants": [
+        {
+          "id": "futuriste",
+          "file": "milan-futuriste",
+          "label": "Futuriste",
+          "source": "exemple_futuriste.json",
+          "buildings": 4,
+          "floors": 95
+        },
+        {
+          "id": "spirales",
+          "file": "milan-spirales",
+          "label": "Tours spirales",
+          "source": "exemple_tours_spirales2.json",
+          "buildings": 4,
+          "floors": 72
+        },
+        {
+          "id": "quatre-tours",
+          "file": "milan-quatre-tours",
+          "label": "Quatre tours",
+          "source": "exemple_4_tours_2.json",
+          "buildings": 5,
+          "floors": 53
+        },
+        {
+          "id": "ensemble",
+          "file": "milan-ensemble",
+          "label": "Ensemble mixte",
+          "source": "exemple6.json",
+          "buildings": 5,
+          "floors": 60
+        }
+      ]
+    },
+    "scale": 1.2
+  },
+  "butterfly": {
+    "flap": {
+      "center": [
+        -0.0004,
+        -0.3082,
+        -0.3348
+      ],
+      "axis": [
+        0.0,
+        -0.42261826174069944,
+        0.9063077870366499
+      ]
+    },
+    "idle": 0.35,
+    "colors": true
+  }
+}
