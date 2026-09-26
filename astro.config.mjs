@@ -15,4 +15,9 @@ export default defineConfig({
     routing: { prefixDefaultLocale: false },
   },
   build: { inlineStylesheets: 'auto' },
+  vite: {
+    // identifiant de build : ajouté aux URL des fichiers 3D (public/shapes) pour que le navigateur
+    // ne réutilise jamais une ancienne version en cache après une mise en ligne
+    define: { __BUILD_ID__: JSON.stringify(Date.now().toString(36)) },
+  },
 });

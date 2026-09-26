@@ -55,6 +55,9 @@ export interface Shape {
   cycle?: CycleState[];
 }
 
+/** URL d'un fichier de public/shapes, versionnée par build (voir astro.config.mjs). */
+export const shapeUrl = (base: string, file: string) => `${base}shapes/${file}?v=${__BUILD_ID__}`;
+
 async function fetchBuf(url: string) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`Fichier introuvable : ${url}`);
@@ -77,7 +80,7 @@ export class ShapeLibrary {
   readonly manifest: Promise<Record<string, ShapeMeta>>;
 
   constructor(private base: string, private s: number) {
-    this.manifest = fetch(`${base}shapes/manifest.json`)
+    this.manifest = fetch(shapeUrl(base, 'manifest.json'))
       .then((r) => (r.ok ? r.json() : {}))
       .catch(() => ({}));
   }
@@ -106,8 +109,8 @@ export class ShapeLibrary {
 
   private async readPair(file: string, colors: boolean) {
     const [pb, cb] = await Promise.all([
-      fetchBuf(`${this.base}shapes/${file}.bin`),
-      colors ? fetchBuf(`${this.base}shapes/${file}.col`) : Promise.resolve(null),
+      fetchBuf(shapeUrl(this.base, `${file}.bin`)),
+      colors ? fetchBuf(shapeUrl(this.base, `${file}.col`)) : Promise.resolve(null),
     ]);
     const pos = stride(new Int16Array(pb), 3, this.s);
     const col = cb ? stride(new Uint8Array(cb), 4, this.s) : null;

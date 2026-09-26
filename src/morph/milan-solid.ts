@@ -21,6 +21,7 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { shapeUrl } from './shapes';
 
 // Maquette Place de Milan (v1.12) COMPLÈTE en vrai maillage, vue de nuit.
 // - Le shader reprend l'éclairage de nuit du simulateur : grille de baies allumées (même hash,
@@ -318,10 +319,10 @@ export class MilanSolid {
     const loader = new GLTFLoader();
     loader.setMeshoptDecoder(MeshoptDecoder);
     const [gltf, treeBuf, dustBuf, dustCol] = await Promise.all([
-      loader.loadAsync(`${this.base}shapes/${this.info.file}`),
-      fetch(`${this.base}shapes/${this.info.trees}`).then((r) => r.arrayBuffer()),
-      fetch(`${this.base}shapes/${this.info.dust}.bin`).then((r) => r.arrayBuffer()),
-      fetch(`${this.base}shapes/${this.info.dust}.col`).then((r) => r.arrayBuffer()),
+      loader.loadAsync(shapeUrl(this.base, this.info.file)),
+      fetch(shapeUrl(this.base, this.info.trees)).then((r) => r.arrayBuffer()),
+      fetch(shapeUrl(this.base, `${this.info.dust}.bin`)).then((r) => r.arrayBuffer()),
+      fetch(shapeUrl(this.base, `${this.info.dust}.col`)).then((r) => r.arrayBuffer()),
     ]);
     const treeParts: Mesh[] = [];
     gltf.scene.traverse((o) => {
@@ -403,7 +404,7 @@ export class MilanSolid {
     if (this.buildings.has(id)) return;
     const file = this.info.saves[id];
     if (!file) return;
-    const data = await fetch(`${this.base}shapes/milan-saves/${file}`).then((r) => r.json());
+    const data = await fetch(shapeUrl(this.base, `milan-saves/${file}`)).then((r) => r.json());
     const g = new Group();
     const mats: ShaderMaterial[] = [];
     for (const b of data.buildings) {
