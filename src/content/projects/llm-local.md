@@ -8,7 +8,7 @@ en:
 order: 3
 year: "2026"
 role: Installation, configuration, diagnostic
-shape: network
+shape: ia
 cover: hermes-dashboard.webp
 coverAlt: "Tableau de bord web de Hermes Agent, page Système (capture de la documentation officielle)"
 gallery:

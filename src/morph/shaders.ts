@@ -71,12 +71,24 @@ uniform vec3  uFlapK;
 uniform float uBeatF;       // 1 si la forme de départ / d'arrivée bat comme un cœur
 uniform float uBeatT;
 uniform float uBeat;        // dilatation du battement (0 au repos)
+uniform float uPulseF;      // 1 si la forme de départ / d'arrivée a des électrons sur ses pistes
+uniform float uPulseT;
 
 varying vec3  vColor;
 varying float vAlpha;
 varying float vHot;
 
 ${noise}
+
+// électron sur une piste : couleur .col = (décalage de la piste, position le long de la piste, 1)
+float electron(vec4 c){
+  if (c.b < 0.5) return 0.0;
+  float head = fract(uTime * 0.38 + c.r * 7.0);          // position de l'électron (0 broche → 1 pastille)
+  float d = c.g - head;
+  float glow = exp(-d * d / 0.0016);                      // l'électron
+  if (d < 0.0) glow += exp(d / 0.06) * 0.35;              // sa traînée
+  return glow;
+}
 
 float easeInOut(float t){ return t<0.5 ? 4.0*t*t*t : 1.0-pow(-2.0*t+2.0,3.0)/2.0; }
 
@@ -181,7 +193,8 @@ void main(){
   gl_Position = clip;
   vHot = f * 0.4;
 
-  float size = uSize * (0.65 + aSeed * 0.7) * (1.0 + f * 0.6 + mid * 0.6);
+  float el = mix(uPulseF > 0.5 ? electron(colF) : 0.0, uPulseT > 0.5 ? electron(colT) : 0.0, lt) * (1.0 - uCalm);
+  float size = uSize * (0.65 + aSeed * 0.7) * (1.0 + f * 0.6 + mid * 0.6 + el * 1.3);
   gl_PointSize = clamp(size * uPixelRatio / -mv.z, 1.0, 14.0 * uPixelRatio);
 
   // dégradé de marque cyan → violet → magenta selon la diagonale et la graine
@@ -201,6 +214,7 @@ void main(){
   float scan = smoothstep(0.06, 0.0, abs(p.y - (fract(uTime * 0.18) * 2.6 - 1.3)));
   vColor += scan * 0.55 * (1.0 - uCalm);
   vColor = mix(vColor, vec3(1.0, 0.85, 1.0), vHot * 0.55);
+  vColor += vec3(0.7, 1.0, 1.0) * el * 1.2;
 
   // atténuation en profondeur (les points arrière sont plus discrets)
   vAlpha = clamp(0.35 + (p.z * 0.5 + 0.5) * 0.65, 0.2, 1.0) * (1.0 + mid * 0.4);

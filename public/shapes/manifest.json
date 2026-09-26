@@ -625,5 +625,10 @@
  },
  "heart": {
   "beat": true
+ },
+ "ia": {
+  "colors": true,
+  "pulse": true,
+  "idle": 0.45
  }
 }

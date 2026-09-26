@@ -17,7 +17,8 @@ export interface ShapeMeta {
   colors?: boolean;
   tilt?: number;                                    // inclinaison de présentation (rad, autour de X)
   scale?: number;                                   // échelle d'affichage relative
-  beat?: boolean;                                   // battement (cœur)
+  beat?: boolean;
+  pulse?: boolean;                                  // électrons qui parcourent les pistes (puce IA)                                   // battement (cœur)
   idle?: number;                                    // amplitude de l'oscillation automatique (1 = normale)
   solid?: SolidInfo;                                // maquette affichée en vrai maillage
   transform?: { center: number[]; scale: number };  // repère normalisé des particules

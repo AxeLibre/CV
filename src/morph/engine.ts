@@ -155,6 +155,8 @@ export class MorphEngine {
         uBeatF: { value: 0 },
         uBeatT: { value: 0 },
         uBeat: { value: 0 },
+        uPulseF: { value: 0 },
+        uPulseT: { value: 0 },
         uFlapC: { value: new Vector3() },
         uFlapK: { value: new Vector3(0, 0, 1) },
       },
@@ -261,6 +263,10 @@ export class MorphEngine {
     this.to = b;
 
     this.selectCycle();
+
+    // électrons de la puce IA
+    u.uPulseF.value = a.meta.pulse ? 1 : 0;
+    u.uPulseT.value = b.meta.pulse ? 1 : 0;
 
     // battement de cœur
     u.uBeatF.value = a.meta.beat ? 1 : 0;
