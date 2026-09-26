@@ -15,7 +15,7 @@ const [first, last] = profile.name.split(' ');
 ---
 
 <!-- HERO ---------------------------------------------------------------->
-<section class="section hero" data-shape="head" data-model="hero" data-hero aria-labelledby="hero-title">
+<section class="section hero" data-shape="accueil" data-model="hero" data-hero aria-labelledby="hero-title">
   <div class="wrap">
     <div class="col">
       <p class="eyebrow" data-reveal><span class="eyebrow__bar"></span>{c.hero.eyebrow}</p>
@@ -71,9 +71,6 @@ const [first, last] = profile.name.split(' ');
       <p class="eyebrow" data-reveal><span class="eyebrow__num">05</span><span class="eyebrow__bar"></span>{c.projects.label}</p>
       <h2 class="h-1" id="projets-title" data-split>{c.projects.title}</h2>
       <p class="lead" data-reveal>{c.projects.text} {c.projects.note}</p>
-      <p class="cycle-label" data-cycle-label aria-live="polite">
-        <i></i><span data-cycle-text></span><span class="cycle-label__src" data-cycle-src></span>
-      </p>
     </div>
   </div>
 </section>
@@ -84,7 +81,7 @@ const [first, last] = profile.name.split(' ');
 </div>
 
 <!-- PARCOURS ------------------------------------------------------------>
-<section class="section section--chapter" id="parcours" data-shape="cube" data-model="right" aria-labelledby="parcours-title">
+<section class="section section--chapter" id="parcours" data-shape="parcours" data-model="right" aria-labelledby="parcours-title">
   <div class="wrap">
     <div class="col chapter__card">
       <p class="eyebrow" data-reveal><span class="eyebrow__num">06</span><span class="eyebrow__bar"></span>{c.path.label}</p>

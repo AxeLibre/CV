@@ -247,6 +247,8 @@ def build(name):
     pts = normalize(pts)
     pts = hilbert_sort(pts) * SCALE.get(name, 1.0)
     write_bin(pts, os.path.join(OUT, f"{name}.bin"))
+    if name == "heart":
+        update_manifest(name, {"beat": True})
     if name == "butterfly":
         # battement d'ailes (shader) : rotation autour de l'axe du corps
         body = pts[np.abs(pts[:, 0]) < 0.03]

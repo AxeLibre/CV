@@ -48,20 +48,29 @@ uniform float uMorph;       // 0 → 1 entre aFrom et aTo
 uniform float uFlow;        // direction du scroll (+1 descente, -1 montée)
 uniform float uSize;
 uniform float uPixelRatio;
-uniform vec3  uRayO;        // rayon souris, en espace local du nuage
-uniform vec3  uRayD;
-uniform vec3  uPointerVel;
-uniform float uPointer;     // 0..1 intensité (survol actif)
 uniform float uRadius;
+#define TRAIL 40
+uniform vec4  uTrail[TRAIL];     // traînée du pointeur à l'écran : position (x corrigé du ratio, y) + poussée
+uniform float uTrailW[TRAIL];    // enveloppe de chaque point de la traînée
+uniform float uAspect;
 uniform float uCalm;        // 1 = prefers-reduced-motion
 uniform float uCycF;        // 1 si la forme de départ / d'arrivée est la forme composée
 uniform float uCycT;
-uniform float uCycle;       // 0 → 1 entre deux états de la proposition
+uniform float uCycle;       // 0 → 1 entre deux états du cycle
+uniform float uCycNoise;    // turbulence du cycle (faible pour les bâtiments, forte pour les logos)
+uniform float uCycFreq;
+uniform float uCycDir;      // 0 = transition du bas vers le haut, 1 = de gauche à droite (écriture)
+uniform float uSolidCtx;    // maquette pleine affichée : masque les particules du contexte
+uniform float uSolidBld;    // proposition affichée en dur : masque ses particules
+uniform int   uCtxCount;    // nombre de particules du contexte (les suivantes = bâtiments)
 uniform float uFlapF;       // 1 si la forme de départ / d'arrivée bat des ailes
 uniform float uFlapT;
 uniform float uFlap;        // angle des ailes (rad)
 uniform vec3  uFlapC;       // point et axe du corps
 uniform vec3  uFlapK;
+uniform float uBeatF;       // 1 si la forme de départ / d'arrivée bat comme un cœur
+uniform float uBeatT;
+uniform float uBeat;        // dilatation du battement (0 au repos)
 
 varying vec3  vColor;
 varying float vAlpha;
@@ -88,10 +97,16 @@ void main(){
   float rising = step(aCycA.y, aCycB.y);
   float h01 = clamp((rising > 0.5 ? aCycB.y : aCycA.y) * 1.4 + 0.2, 0.0, 1.0);
   float cdel = aSeed * 0.2 + (rising > 0.5 ? h01 : 1.0 - h01) * 0.4;
-  float cl = easeInOut(smoothstep(cdel, cdel + 0.4, uCycle));
+  float cspan = 0.4;
+  if (uCycDir > 0.5) {
+    // écriture : chaque lettre se forme à son tour, de gauche à droite
+    cdel = aSeed * 0.04 + clamp((aCycB.x + 0.75) / 1.5, 0.0, 1.0) * 0.72;
+    cspan = 0.24;
+  }
+  float cl = easeInOut(smoothstep(cdel, cdel + cspan, uCycle));
   float moving = step(1e-4, distance(aCycA, aCycB));
   vec3 C = mix(aCycA, aCycB, cl);
-  C += snoiseVec(C * 6.0 + uTime * 0.4) * sin(3.14159265 * cl) * 0.025 * moving;
+  C += snoiseVec(C * uCycFreq + uTime * 0.4) * sin(3.14159265 * cl) * uCycNoise * moving;
   vec4 CC = mix(aColCA, aColCB, cl);
 
   vec3 from = uCycF > 0.5 ? C : aFrom;
@@ -100,6 +115,8 @@ void main(){
   vec4 colT = uCycT > 0.5 ? CC : aColTo;
   if (uFlapF > 0.5) from = flap(from, colF.r);
   if (uFlapT > 0.5) to = flap(to, colT.r);
+  if (uBeatF > 0.5) from *= 1.0 + uBeat * (0.8 + 0.4 * aSeed);
+  if (uBeatT > 0.5) to *= 1.0 + uBeat * (0.8 + 0.4 * aSeed);
 
   // Décalage par particule + balayage bas → haut : la forme se "réimprime" comme un hologramme
   float delay = aSeed * 0.3 + (from.y * 0.5 + 0.5) * 0.3;
@@ -120,20 +137,49 @@ void main(){
   float band = step(abs(p.y - (fract(uTime * 0.61) * 2.0 - 1.0)), 0.04);
   p.x += gw * band * 0.06;
 
-  // --- Interaction souris / doigt : les particules proches du pointeur sont
-  //     légèrement entraînées dans le sens du mouvement (effet « accroche »),
-  //     puis reviennent en place quand le pointeur ralentit ou s'arrête.
-  vec3 rel = p - uRayO;
-  vec3 perp = rel - dot(rel, uRayD) * uRayD;
-  float d = length(perp);
-  float fall = 1.0 - smoothstep(0.0, uRadius, d);
-  float f = uPointer * fall * fall;
-  float grip = 0.7 + 0.6 * aSeed;                 // chaque particule accroche plus ou moins
-  p += uPointerVel * f * grip + (perp / max(d, 1e-4)) * f * 0.02;
-  vHot = f * 0.5;
+
 
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
-  gl_Position = projectionMatrix * mv;
+  vec4 clip = projectionMatrix * mv;
+
+  // --- Interaction souris / doigt : un flux d'air laissé par le pointeur.
+  //     La traînée est une ligne continue à l'écran (tête = position actuelle du pointeur) ;
+  //     les particules proches sont emportées dans le sens du geste, flottent,
+  //     puis reviennent en place comme sur un ressort très souple.
+  vec2 sp = clip.xy / clip.w;
+  sp.x *= uAspect;
+  vec2 push = vec2(0.0);
+  vec2 burst = vec2(0.0);
+  float fsum = 0.0;
+  float fl = 0.0;
+  for (int i = 0; i < TRAIL - 1; i++) {
+    float w = max(uTrailW[i], uTrailW[i + 1]);
+    if (w < 0.002) continue;
+    vec2 a = uTrail[i].xy;
+    vec2 ab = uTrail[i + 1].xy - a;
+    float h = clamp(dot(sp - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+    vec2 off = sp - a - ab * h;
+    float dd = length(off);
+    float fall = 1.0 - smoothstep(0.0, uRadius, dd);
+    fall *= fall;
+    float wi = mix(uTrailW[i], uTrailW[i + 1], h);
+    push += mix(uTrail[i].zw, uTrail[i + 1].zw, h) * fall;
+    burst += off / max(dd, 1e-4) * fall * wi;    // chassées de part et d'autre de la trajectoire
+    fsum += fall * wi;
+    fl += fall;
+  }
+  push /= max(fl, 1.0);                         // segments superposés : pas de cumul
+  burst /= max(fl, 1.0);
+  float f = min(fsum, 1.0);
+  float grip = 0.6 + 0.8 * aSeed;               // chaque particule est plus ou moins bousculée
+  // éclatement : poussée vers l'extérieur + direction propre à chaque particule
+  float ang = aSeed * 43.7;
+  push += burst * 0.045 + vec2(cos(ang), sin(ang)) * f * 0.03;
+  if (f > 0.001) push += snoiseVec(vec3(sp * 3.0, uTime * 0.35 + aSeed)).xy * f * 0.018;  // flottement
+  push.x /= uAspect;
+  clip.xy += push * grip * clip.w;
+  gl_Position = clip;
+  vHot = f * 0.4;
 
   float size = uSize * (0.65 + aSeed * 0.7) * (1.0 + f * 0.6 + mid * 0.6);
   gl_PointSize = clamp(size * uPixelRatio / -mv.z, 1.0, 14.0 * uPixelRatio);
@@ -158,6 +204,9 @@ void main(){
 
   // atténuation en profondeur (les points arrière sont plus discrets)
   vAlpha = clamp(0.35 + (p.z * 0.5 + 0.5) * 0.65, 0.2, 1.0) * (1.0 + mid * 0.4);
+  // forme composée affichée en vrai maillage : les particules s'effacent
+  float isCtx = gl_VertexID < uCtxCount ? 1.0 : 0.0;
+  vAlpha *= 1.0 - max(uCycF, uCycT) * (isCtx * uSolidCtx + (1.0 - isCtx) * uSolidBld);
 }
 `;
 
@@ -193,7 +242,46 @@ void main(){
   p.y = mod(p.y + uScroll * speed + uTime * 0.02 * speed + uHeight * 0.5, uHeight) - uHeight * 0.5;
   p.x += sin(uTime * 0.2 + aSeed * 40.0) * 0.05;
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
-  gl_Position = projectionMatrix * mv;
+  vec4 clip = projectionMatrix * mv;
+
+  // --- Interaction souris / doigt : un flux d'air laissé par le pointeur.
+  //     La traînée est une ligne continue à l'écran (tête = position actuelle du pointeur) ;
+  //     les particules proches sont emportées dans le sens du geste, flottent,
+  //     puis reviennent en place comme sur un ressort très souple.
+  vec2 sp = clip.xy / clip.w;
+  sp.x *= uAspect;
+  vec2 push = vec2(0.0);
+  vec2 burst = vec2(0.0);
+  float fsum = 0.0;
+  float fl = 0.0;
+  for (int i = 0; i < TRAIL - 1; i++) {
+    float w = max(uTrailW[i], uTrailW[i + 1]);
+    if (w < 0.002) continue;
+    vec2 a = uTrail[i].xy;
+    vec2 ab = uTrail[i + 1].xy - a;
+    float h = clamp(dot(sp - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+    vec2 off = sp - a - ab * h;
+    float dd = length(off);
+    float fall = 1.0 - smoothstep(0.0, uRadius, dd);
+    fall *= fall;
+    float wi = mix(uTrailW[i], uTrailW[i + 1], h);
+    push += mix(uTrail[i].zw, uTrail[i + 1].zw, h) * fall;
+    burst += off / max(dd, 1e-4) * fall * wi;    // chassées de part et d'autre de la trajectoire
+    fsum += fall * wi;
+    fl += fall;
+  }
+  push /= max(fl, 1.0);                         // segments superposés : pas de cumul
+  burst /= max(fl, 1.0);
+  float f = min(fsum, 1.0);
+  float grip = 0.6 + 0.8 * aSeed;               // chaque particule est plus ou moins bousculée
+  // éclatement : poussée vers l'extérieur + direction propre à chaque particule
+  float ang = aSeed * 43.7;
+  push += burst * 0.045 + vec2(cos(ang), sin(ang)) * f * 0.03;
+  if (f > 0.001) push += snoiseVec(vec3(sp * 3.0, uTime * 0.35 + aSeed)).xy * f * 0.018;  // flottement
+  push.x /= uAspect;
+  clip.xy += push * grip * clip.w;
+  gl_Position = clip;
+  vHot = f * 0.4;
   gl_PointSize = (1.0 + aSeed * 2.2) * uPixelRatio * 6.0 / -mv.z;
   vAlpha = 0.25 + 0.5 * aSeed;
 }

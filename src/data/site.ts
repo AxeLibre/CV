@@ -48,7 +48,7 @@ const fr = {
   chapters: [
     {
       id: 'support',
-      shape: 'laptop',
+      shape: 'os',
       label: 'Support & matériel',
       title: 'Diagnostiquer, réparer, remettre en service.',
       text: "Formé au métier de Technicien d'Assistance Informatique après quinze ans de relation client, je sais résoudre une panne et rassurer l'utilisateur qui la subit.",

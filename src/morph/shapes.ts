@@ -1,4 +1,5 @@
 import { BufferAttribute } from 'three';
+import type { SolidInfo } from './milan-solid';
 
 // Bibliothèque de formes : positions Int16 (.bin), couleurs RGBA facultatives (.col)
 // et métadonnées (public/shapes/manifest.json) : battement d'ailes, inclinaison de vue,
@@ -16,9 +17,18 @@ export interface ShapeMeta {
   colors?: boolean;
   tilt?: number;                                    // inclinaison de présentation (rad, autour de X)
   scale?: number;                                   // échelle d'affichage relative
+  beat?: boolean;                                   // battement (cœur)
   idle?: number;                                    // amplitude de l'oscillation automatique (1 = normale)
+  solid?: SolidInfo;                                // maquette affichée en vrai maillage
+  transform?: { center: number[]; scale: number };  // repère normalisé des particules
+  cycle?: string[];                                 // forme qui fait défiler d'autres formes (ex. logos)
+  hold?: number;                                    // durée d'affichage de chaque forme du cycle (s)
+  move?: number;                                    // durée de la transition entre deux formes (s)
   flap?: { center: number[]; axis: number[] };      // battement d'ailes
   compose?: {
+    kind?: 'text';                                  // variantes simples (texte d'écran) au lieu d'emprises
+    hold?: number;
+    move?: number;
     base: string;
     count: number;
     blockCount: number;
@@ -34,7 +44,7 @@ export interface CycleState {
   hold: number;          // durée d'affichage (s)
   move: number;          // durée de la transition vers l'état suivant (s)
   built: boolean;
-  variant: VariantInfo;
+  variant?: VariantInfo;
 }
 
 export interface Shape {
@@ -106,6 +116,7 @@ export class ShapeLibrary {
 
   private async build(name: string, meta: ShapeMeta): Promise<Shape> {
     if (meta.compose) return this.buildComposed(name, meta);
+    if (meta.cycle) return this.buildCycle(name, meta);
     const { pos, col } = await this.readPair(name, !!meta.colors);
     const n = pos.length / 3;
     return {
@@ -114,6 +125,19 @@ export class ShapeLibrary {
       pos: new BufferAttribute(pos, 3, true),
       col: col ? new BufferAttribute(col, 4, true) : this.blankColors(n),
     };
+  }
+
+  /** Forme qui fait défiler plusieurs formes complètes (ex. logos de l'accueil). */
+  private async buildCycle(name: string, meta: ShapeMeta): Promise<Shape> {
+    const members = await Promise.all(meta.cycle!.map((m) => this.load(m)));
+    const cycle: CycleState[] = members.map((m) => ({
+      pos: m.pos,
+      col: m.col,
+      hold: meta.hold ?? 2.5,
+      move: meta.move ?? 1.8,
+      built: false,
+    }));
+    return { name, meta, pos: cycle[0].pos, col: cycle[0].col, cycle };
   }
 
   /** Maquette + propositions : [contexte | bâtiments], avec pour chaque proposition
@@ -147,10 +171,15 @@ export class ShapeLibrary {
       }
       const F = { pos: new BufferAttribute(footPos, 3, true), col: new BufferAttribute(footCol, 4, true) };
       const B = { pos: new BufferAttribute(builtPos, 3, true), col: new BufferAttribute(builtCol, 4, true) };
+      if (c.kind === 'text') {
+        // texte d'écran : les mots s'enchaînent directement (l'écriture est gérée par le shader)
+        cycle.push({ ...B, hold: c.hold ?? 2.8, move: c.move ?? 1.6, built: false, variant });
+        return;
+      }
       // emprise → élévation → maintien → descente → glissement vers la proposition suivante
-      cycle.push({ ...F, hold: 0.7, move: 2.8, built: false, variant });
-      cycle.push({ ...B, hold: 4.2, move: 2.2, built: true, variant });
-      cycle.push({ ...F, hold: 0.3, move: 1.8, built: false, variant });
+      cycle.push({ ...F, hold: 0.4, move: 1.7, built: false, variant });
+      cycle.push({ ...B, hold: 4.6, move: 1.3, built: true, variant });
+      cycle.push({ ...F, hold: 0.2, move: 1.1, built: false, variant });
     });
     return { name, meta, pos: cycle[0].pos, col: cycle[0].col, cycle };
   }

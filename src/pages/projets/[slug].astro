@@ -39,11 +39,6 @@ const ext = (href: string) => /^https?:/.test(href);
           ))}
         </div>
       )}
-      {d.shape === 'milan' && (
-        <p class="cycle-label" data-cycle-label aria-live="polite">
-        <i></i><span data-cycle-text></span><span class="cycle-label__src" data-cycle-src></span>
-      </p>
-      )}
       <dl class="p-meta" data-reveal>
         <div><dt>{c.role}</dt><dd>{d.role}</dd></div>
         <div><dt>{c.year}</dt><dd>{d.year ?? '—'}</dd></div>

@@ -30,7 +30,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "public", "shapes")
 PREV = os.path.join(ROOT, "tools", "previews")
 V112 = r"D:\Site_Web\milan\version1.12"
-SRC = os.path.join(ROOT, "tools", "sources", "milan")      # GLB décompressés (gltf-transform)
+SRC = os.path.join(os.path.dirname(ROOT), "ONE - Copie", "portfolio", "tools", "sources", "milan")   # GLB décompressés (gltf-transform)
 SAVES = r"D:\Site_Web\milan"
 
 N = 32768
@@ -316,7 +316,11 @@ def main():
     ground = (0.25 - center[1]) * scale                   # altitude du polygone (y = 0) normalisée
     man_path = os.path.join(OUT, "manifest.json")
     manifest = json.load(open(man_path)) if os.path.exists(man_path) else {}
+    previous = manifest.get("milan", {})
     manifest["milan"] = {
+        **previous,
+        # repère normalisé des particules : q = (p - center) * scale (sert à caler la maquette pleine)
+        "transform": {"center": center.round(4).tolist(), "scale": float(scale)},
         "colors": True,
         "tilt": 0.5,                                      # vue plongeante sur la maquette
         "scale": 1.2,

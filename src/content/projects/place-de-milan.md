@@ -15,8 +15,8 @@ coverAlt: Visuel d'annonce du Place de Milan Building Simulator
 video: lpsiViUeups
 videoThumb: yt-milan.webp
 gallery:
-  - { src: milan-nuit-quartier.webp, alt: Vue de nuit du quartier Part-Dieu avec façades éclairées et tours proposées, caption: Version 1.12, vue de nuit sur le quartier }
-  - { src: milan-nuit-gare.webp, alt: Vue de nuit plongeante sur la gare Part-Dieu et la place de Milan, caption: Version 1.12, la gare et la place de nuit }
+  - { src: milan-nuit-ensemble.webp, alt: "Vue de nuit d'ensemble de la Part-Dieu, façades éclairées et nouvelles tours", caption: "Version 1.12, vue de nuit d'ensemble" }
+  - { src: milan-jour-usages.webp, alt: "Vue de jour du quartier avec les nouveaux bâtiments colorés selon leur usage", caption: "Version 1.12, le quartier de jour et la légende des usages" }
   - { src: milan-jour-rue.webp, alt: Vue de jour au niveau de la rue avec piétons, trams et bus, caption: Version 1.12, la vie du quartier en journée }
   - { src: milan-architecte.webp, alt: Planche du mode architecte en élévation, caption: Mode architecte, élévations et vue axonométrique }
 stack: [Three.js, Blender, Python, glTF / Meshopt, Open data Grand Lyon]

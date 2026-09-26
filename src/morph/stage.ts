@@ -112,21 +112,9 @@ export function initStage() {
     if (!reduced) place.y += (local - 0.5) * 0.1;
     engine.setPlacement(place);
     engine.setScroll(window.scrollY);
-  }
 
-  // légende de la proposition affichée sur la maquette (tirée des sauvegardes JSON)
-  const labels = [...document.querySelectorAll<HTMLElement>('[data-cycle-label]')];
-  window.addEventListener('morph:variant', (e) => {
-    const { active, variant } = (e as CustomEvent).detail;
-    labels.forEach((el) => {
-      el.classList.toggle('is-on', !!(active && variant));
-      if (!variant) return;
-      const out = el.querySelector('[data-cycle-text]');
-      if (out) out.textContent = `${variant.label} · ${variant.buildings} bâtiments · R+${variant.floors}`;
-      const src = el.querySelector('[data-cycle-src]');
-      if (src) src.textContent = variant.source;
-    });
-  });
+    engine.setNarrow(narrow.matches);
+  }
 
   let ticking = false;
   const onScroll = () => {

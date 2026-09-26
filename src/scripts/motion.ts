@@ -164,7 +164,8 @@ if (finePointer) {
       cursor.classList.add('is-on');
       cx(e.clientX);
       cy(e.clientY);
-      cursor.classList.toggle('is-link', !!(e.target as Element).closest('a, button'));
+      const target = e.target as Element | null;
+      cursor.classList.toggle('is-link', !!target?.closest?.('a, button'));
     });
     document.documentElement.addEventListener('mouseleave', () => cursor.classList.remove('is-on'));
   }

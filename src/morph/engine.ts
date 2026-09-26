@@ -3,19 +3,19 @@ import {
   BufferAttribute,
   BufferGeometry,
   Group,
-  Matrix4,
   PerspectiveCamera,
   Points,
-  Raycaster,
   Scene,
   ShaderMaterial,
   Timer,
   Vector2,
   Vector3,
+  Vector4,
   WebGLRenderer,
 } from 'three';
 import { dustFragment, dustVertex, morphFragment, morphVertex } from './shaders';
 import { ShapeLibrary, type Shape, type VariantInfo } from './shapes';
+import type { MilanSolid } from './milan-solid';
 
 export interface Placement {
   x: number;       // en fraction de la largeur visible (-0.5 … 0.5)
@@ -32,6 +32,8 @@ export interface EngineOptions {
 }
 
 const FOV = 35;
+const TRAIL = 40;            // points de la traînée (doit correspondre au shader)
+const TRAIL_STEP = 0.035;    // intervalle entre deux échantillons (s)
 const CAM_Z = 6;
 const damp = (a: number, b: number, lambda: number, dt: number) => a + (b - a) * (1 - Math.exp(-lambda * dt));
 
@@ -46,8 +48,6 @@ export class MorphEngine {
   private points: Points;
   private clock = new Timer();
   private elapsed = 0;
-  private raycaster = new Raycaster();
-  private inv = new Matrix4();
 
   private lib: ShapeLibrary;
   private sequence: string[] = [];
@@ -63,6 +63,17 @@ export class MorphEngine {
   private cycleClock = 0;
   private cycleMoving = false;
   private cycleActive = false;
+
+  // maquette en vrai maillage (Place de Milan) : les particules ne servent qu'aux transitions
+  private solid?: MilanSolid;
+  private solidLoading = false;
+  private presence = 0;
+  private bldFade = 0;
+  private reveal = 0;            // onde radiale qui fait apparaître le reste de la ville
+  private revealClock = 0;
+  private settled = 0;
+  private narrow = false;
+  private drawSize = new Vector2();
   private segment = -1;
   private count = 0;
 
@@ -79,9 +90,17 @@ export class MorphEngine {
   // pointeur
   private ndc = new Vector2(9, 9);
   private tilt = new Vector2();
-  private prevQ = new Vector3();
-  private vel = new Vector3();
   private hadPointer = false;
+  // traînée du pointeur à l'écran (du plus récent au plus ancien) et pointeur lissé
+  private trailP: Vector2[] = [];                  // positions (x corrigé du ratio)
+  private trailV: Vector2[] = [];                  // vitesses au moment du passage
+  private trailA: number[] = [];                   // âges (s)
+  private trailU = Array.from({ length: TRAIL }, () => new Vector4());
+  private trailW = new Array(TRAIL).fill(0);
+  private ndcVel = new Vector2();
+  private prevSmooth = new Vector2();
+  private ndcSmooth = new Vector2(9, 9);
+  private trailTimer = 0;
 
   private dpr = 1;
   private maxDpr = 1;
@@ -115,26 +134,38 @@ export class MorphEngine {
         uFlow: { value: 1 },
         uSize: { value: opts.stride > 1 ? 26 : 22 },
         uPixelRatio: { value: this.dpr },
-        uRayO: { value: new Vector3(0, 0, 50) },
-        uRayD: { value: new Vector3(0, 0, -1) },
-        uPointerVel: { value: new Vector3() },
-        uPointer: { value: 0 },
-        uRadius: { value: 0.3 },
+        uRadius: { value: 0.2 },
+        uTrail: { value: [] as Vector4[] },
+        uTrailW: { value: [] as number[] },
+        uAspect: { value: 1 },
         uCalm: { value: opts.reducedMotion ? 1 : 0 },
         uOpacity: { value: 0 },
         uCycF: { value: 0 },
         uCycT: { value: 0 },
         uCycle: { value: 0 },
+        uCycNoise: { value: 0.025 },
+        uCycFreq: { value: 6 },
+        uCycDir: { value: 0 },
+        uSolidCtx: { value: 0 },
+        uSolidBld: { value: 0 },
+        uCtxCount: { value: 0 },
         uFlapF: { value: 0 },
         uFlapT: { value: 0 },
         uFlap: { value: 0 },
+        uBeatF: { value: 0 },
+        uBeatT: { value: 0 },
+        uBeat: { value: 0 },
         uFlapC: { value: new Vector3() },
         uFlapK: { value: new Vector3(0, 0, 1) },
       },
     });
     this.lib = new ShapeLibrary(opts.base, opts.stride);
+    const tu = this.material.uniforms;
+    tu.uTrail.value = this.trailU;
+    tu.uTrailW.value = this.trailW;
     this.points = new Points(this.geometry, this.material);
     this.points.frustumCulled = false;
+    this.points.renderOrder = 10;
     this.group.add(this.points);
     this.scene.add(this.group);
 
@@ -183,6 +214,20 @@ export class MorphEngine {
   load(name: string): Promise<Shape> {
     return this.lib.load(name).then((shape) => {
       this.ensureGeometry(shape.pos.count);
+      const m = shape.meta;
+      if (m.solid && m.transform && m.compose && !this.solidLoading) {
+        // chargé à la demande : le chargeur GLTF n'alourdit que les pages qui montrent la maquette
+        this.solidLoading = true;
+        import('./milan-solid')
+          .then(({ MilanSolid }) => {
+            const solid = new MilanSolid(this.opts.base, m.solid!, m.transform!, this.opts.stride);
+            this.solid = solid;
+            this.group.add(solid.root);
+            this.material.uniforms.uCtxCount.value = Math.floor(m.compose!.count / this.opts.stride);
+            return solid.load().then(() => m.compose!.variants.forEach((v) => solid.loadVariant(v.id)));
+          })
+          .catch(console.warn);
+      }
       return shape;
     });
   }
@@ -215,17 +260,11 @@ export class MorphEngine {
     this.from = a;
     this.to = b;
 
-    // forme composée (maquette + propositions) : ses points viennent des attributs du cycle
-    const cyc = a.cycle ? a : b.cycle ? b : undefined;
-    u.uCycF.value = a.cycle ? 1 : 0;
-    u.uCycT.value = b.cycle ? 1 : 0;
-    if (cyc && cyc !== this.cycleShape) {
-      this.cycleShape = cyc;
-      this.cycleIndex = 0;
-      this.cycleClock = 0;
-      this.cycleMoving = false;
-      this.bindCycle();
-    }
+    this.selectCycle();
+
+    // battement de cœur
+    u.uBeatF.value = a.meta.beat ? 1 : 0;
+    u.uBeatT.value = b.meta.beat ? 1 : 0;
 
     // battement d'ailes
     const flap = a.meta.flap ?? b.meta.flap;
@@ -234,6 +273,33 @@ export class MorphEngine {
     if (flap) {
       u.uFlapC.value.fromArray(flap.center);
       u.uFlapK.value.fromArray(flap.axis).normalize();
+    }
+  }
+
+  /** Formes à cycle (logos, maquette + propositions) : leurs points viennent des attributs du cycle.
+   *  Un seul cycle à la fois : si départ ET arrivée en ont un, c'est la forme dominante
+   *  de la transition qui l'utilise (l'autre affiche son premier état). */
+  private selectCycle() {
+    const a = this.from;
+    const b = this.to;
+    if (!a || !b) return;
+    const u = this.material.uniforms;
+    const cyc = a.cycle && b.cycle ? (u.uMorph.value < 0.5 ? a : b) : a.cycle ? a : b.cycle ? b : undefined;
+    u.uCycF.value = cyc && cyc === a ? 1 : 0;
+    u.uCycT.value = cyc && cyc === b ? 1 : 0;
+    if (cyc && cyc !== this.cycleShape) {
+      this.cycleShape = cyc;
+      this.cycleIndex = 0;
+      this.cycleClock = 0;
+      this.cycleMoving = false;
+      this.bindCycle();
+      // un cycle de formes complètes (logos) a une transition plus spectaculaire
+      const full = !!cyc.meta.cycle;
+      const text = cyc.meta.compose?.kind === 'text';
+      u.uCycNoise.value = full ? 0.28 : text ? 0.05 : 0.025;
+      u.uCycFreq.value = full ? 1.6 : text ? 5 : 6;
+      u.uCycDir.value = text ? 1 : 0;
+      u.uCtxCount.value = cyc.meta.compose ? Math.floor(cyc.meta.compose.count / this.opts.stride) : 0;
     }
   }
 
@@ -282,6 +348,51 @@ export class MorphEngine {
     }
   }
 
+  /** Maquette pleine : visible quand la forme est posée, particules seulement pendant les transitions. */
+  private updateSolid(dt: number) {
+    if (!this.solid) return;
+    const u = this.material.uniforms;
+    const m = u.uMorph.value;
+    const has = (s?: Shape) => !!s?.meta.solid;
+    const sstep = (a: number, b: number, x: number) => {
+      const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+      return t * t * (3 - 2 * t);
+    };
+    let target = 0;
+    if (has(this.from) && has(this.to)) target = 1;
+    else if (has(this.to)) target = sstep(0.82, 1, m);
+    else if (has(this.from)) target = 1 - sstep(0, 0.18, m);
+    this.presence = damp(this.presence, target, 10, dt);
+
+    // proposition : volume plein une fois élevée, particules pendant l'élévation et la descente
+    const c = this.cycleShape?.cycle;
+    let bldTarget = 0;
+    let variant: string | undefined;
+    if (c && this.cycleShape?.meta.solid) {
+      const cur = c[this.cycleIndex];
+      variant = cur.variant?.id;
+      if (cur.built && !this.cycleMoving) bldTarget = this.cycleClock < cur.hold - 0.25 ? 1 : 0;
+    }
+    this.bldFade = damp(this.bldFade, bldTarget, bldTarget > this.bldFade ? 9 : 16, dt);
+    u.uSolidCtx.value = this.presence;
+    u.uSolidBld.value = this.presence * this.bldFade;
+
+    // la ville entière apparaît par une onde radiale une fois la maquette posée face au titre
+    if (this.presence > 0.97) this.settled += dt;
+    else if (this.presence < 0.1) {
+      this.settled = 0;
+      this.revealClock = 0;
+    }
+    if (this.settled > 0.35) this.revealClock += dt;
+    const DURATION = 4.2;
+    const t = Math.min(1, this.revealClock / DURATION);
+    const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    this.reveal = eased * (this.solid.reach + 150);
+
+    this.renderer.getDrawingBufferSize(this.drawSize);
+    this.solid.update(this.presence * this.place.opacity, this.reveal, variant, this.bldFade, this.narrow, this.drawSize);
+  }
+
   private emitVariant(v?: VariantInfo) {
     const c = this.cycleShape?.cycle;
     const variant = v ?? (c ? c[this.cycleIndex].variant : undefined);
@@ -300,6 +411,11 @@ export class MorphEngine {
 
   setPlacement(p: Placement) {
     this.targetPlace = p;
+  }
+
+  /** Mise en page mobile (texte sous le modèle) ou ordinateur (texte à gauche). */
+  setNarrow(v: boolean) {
+    this.narrow = v;
   }
 
   setScroll(y: number) {
@@ -323,29 +439,70 @@ export class MorphEngine {
 
   private updatePointer(dt: number) {
     const u = this.material.uniforms;
-    this.points.updateMatrixWorld();
-    this.inv.copy(this.points.matrixWorld).invert();
-    this.raycaster.setFromCamera(this.ndc, this.camera);
-    const o = this.raycaster.ray.origin.clone().applyMatrix4(this.inv);
-    const d = this.raycaster.ray.direction.clone().transformDirection(this.inv);
-    u.uRayO.value.copy(o);
-    u.uRayD.value.copy(d);
+    const aspect = this.camera.aspect;
+    u.uAspect.value = aspect;
 
-    // vitesse du pointeur dans le repère du modèle : c'est elle qui entraîne les particules
-    const q = o.clone().addScaledVector(d, -o.dot(d));
+    // pointeur lissé à chaque image : les événements souris arrivent par à-coups
     const hasPointer = this.ndc.x < 5;
-    if (dt > 0) {
-      const v = hasPointer && this.hadPointer ? q.clone().sub(this.prevQ).divideScalar(dt).clampLength(0, 4) : new Vector3();
-      // accroche rapide, relâchement lent : les particules reviennent en douceur
-      const k = v.length() > this.vel.length() ? 14 : 3.5;
-      this.vel.lerp(v, 1 - Math.exp(-k * dt));
-    }
+    if (!hasPointer) this.ndcSmooth.set(9, 9);
+    else if (this.ndcSmooth.x > 5 || !this.hadPointer) {
+      this.ndcSmooth.copy(this.ndc);
+      this.prevSmooth.copy(this.ndc);
+      this.ndcVel.set(0, 0);
+    } else this.ndcSmooth.lerp(this.ndc, 1 - Math.exp(-28 * dt));
+
+    // vitesse lissée (écran, x corrigé du ratio)
+    if (hasPointer && dt > 0) {
+      const v = new Vector2((this.ndcSmooth.x - this.prevSmooth.x) * aspect, this.ndcSmooth.y - this.prevSmooth.y).divideScalar(dt);
+      this.ndcVel.lerp(v.clampLength(0, 6), 1 - Math.exp(-10 * dt));
+      this.prevSmooth.copy(this.ndcSmooth);
+    } else this.ndcVel.multiplyScalar(Math.exp(-6 * dt));
     this.hadPointer = hasPointer;
-    this.prevQ.copy(q);
-    u.uPointerVel.value.copy(this.vel).multiplyScalar(0.06).clampLength(0, 0.14);
-    // pas de mouvement, pas de déformation
-    const strength = hasPointer ? Math.min(1, this.vel.length() / 1.2) : 0;
-    u.uPointer.value = damp(u.uPointer.value, strength, 8, dt);
+    const head = new Vector2(this.ndcSmooth.x * aspect, this.ndcSmooth.y);
+
+    // un point de traînée toutes les 25 ms tant que le pointeur bouge
+    for (let i = 0; i < this.trailA.length; i++) this.trailA[i] += dt;
+    this.trailTimer += dt;
+    if (hasPointer && this.trailTimer >= TRAIL_STEP && this.ndcVel.length() > 0.05) {
+      this.trailTimer = 0;
+      this.trailP.unshift(head.clone());
+      this.trailV.unshift(this.ndcVel.clone());
+      this.trailA.unshift(0);
+      if (this.trailP.length > TRAIL - 1) {
+        this.trailP.pop();
+        this.trailV.pop();
+        this.trailA.pop();
+      }
+    }
+
+    // ressort très souple : la poussée colle au geste, ondule légèrement et s'éteint en douceur
+    // avant la fin de la traînée (aucun saut quand un point disparaît)
+    const LIFE = (TRAIL - 1) * TRAIL_STEP;
+    const TAU = 0.95;
+    const OMEGA = 2.6;
+    const GAIN = 0.05;
+    const env = (a: number) => {
+      const tail = 1 - Math.min(1, Math.max(0, (a - 0.5 * LIFE) / (0.5 * LIFE)));
+      return Math.exp(-a / TAU) * tail * tail;
+    };
+    // tête de la traînée = position actuelle du pointeur
+    const headW = hasPointer ? Math.min(1, this.ndcVel.length() / 0.6) : 0;
+    const hv = this.ndcVel.clone().multiplyScalar(GAIN).clampLength(0, 0.16);
+    this.trailU[0].set(head.x, head.y, hv.x * headW, hv.y * headW);
+    this.trailW[0] = headW;
+    for (let i = 1; i < TRAIL; i++) {
+      const k = i - 1;
+      if (k < this.trailP.length) {
+        const a = this.trailA[k];
+        const w = env(a);
+        const v = this.trailV[k].clone().multiplyScalar(GAIN).clampLength(0, 0.16).multiplyScalar(w * Math.cos(OMEGA * a));
+        this.trailU[i].set(this.trailP[k].x, this.trailP[k].y, v.x, v.y);
+        this.trailW[i] = w;
+      } else {
+        this.trailU[i].set(9, 9, 0, 0);
+        this.trailW[i] = 0;
+      }
+    }
 
     this.tilt.x = damp(this.tilt.x, this.ndc.x > 5 ? 0 : this.ndc.x, 2, dt);
     this.tilt.y = damp(this.tilt.y, this.ndc.y > 5 ? 0 : this.ndc.y, 2, dt);
@@ -448,7 +605,16 @@ export class MorphEngine {
     const w = t * 6.5;
     u.uFlap.value = calm ? 0 : -0.25 + 0.6 * (Math.sin(w) + 0.25 * Math.sin(2 * w));
 
+    if (this.from?.cycle && this.to?.cycle) this.selectCycle();
+    // cœur : double battement « boum-boum » toutes les 1,1 s
+    if (!calm) {
+      const ph = t % 1.1;
+      const pulse = (c: number, w: number) => Math.exp(-(((ph - c) / w) ** 2));
+      u.uBeat.value = 0.085 * pulse(0.08, 0.055) + 0.055 * pulse(0.3, 0.06);
+    } else u.uBeat.value = 0;
+
     this.updateCycle(dt);
+    this.updateSolid(dt);
     this.updatePointer(dt);
 
     this.fade = Math.min(1, this.fade + dt / 1.2);
