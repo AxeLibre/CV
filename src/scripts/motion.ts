@@ -214,6 +214,24 @@ document.querySelectorAll<HTMLElement>('[data-slides]').forEach((box) => {
     items[i].classList.add('is-active');
     dots[i]?.classList.add('is-active');
   };
+  if (box.dataset.trigger === 'hover') {
+    // vignette de projet : défile au survol de la carte, revient à l'image d'origine ensuite
+    const card = box.closest<HTMLElement>('.card') ?? box;
+    let delay = 0;
+    card.addEventListener('pointerenter', () => {
+      lazy(items[1]);
+      delay = window.setTimeout(() => {
+        show(i + 1);
+        timer = window.setInterval(() => show(i + 1), 1700);
+      }, 250);
+    });
+    card.addEventListener('pointerleave', () => {
+      clearTimeout(delay);
+      clearInterval(timer);
+      if (i !== 0) show(0);
+    });
+    return;
+  }
   new IntersectionObserver(([entry]) => {
     clearInterval(timer);
     if (entry.isIntersecting) timer = window.setInterval(() => show(i + 1), 4500);
@@ -227,7 +245,6 @@ document.querySelectorAll<HTMLButtonElement>('[data-youtube]').forEach((btn) => 
     iframe.src = `https://www.youtube-nocookie.com/embed/${btn.dataset.youtube}?autoplay=1&rel=0`;
     iframe.title = btn.getAttribute('aria-label') || 'Vidéo';
     iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-    iframe.allowFullscreen = true;
     btn.replaceWith(iframe);
   });
 });

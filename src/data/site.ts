@@ -60,7 +60,7 @@ const fr = {
         'Outils collaboratifs et bureautiques',
         'Accompagnement des utilisateurs',
       ],
-      proof: ['net-scan'],
+      proof: ['llm-local'],
     },
     {
       id: 'reseau',
@@ -76,7 +76,7 @@ const fr = {
         'Intervention sur réseau sécurisé',
         'Diagnostic : ARP, ports, ICMP',
       ],
-      proof: ['net-scan', 'compteur-binaire'],
+      proof: ['llm-local', 'compteur-binaire'],
     },
     {
       id: '3d',

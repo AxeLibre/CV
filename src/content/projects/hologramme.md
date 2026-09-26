@@ -9,8 +9,14 @@ order: 4
 year: "2026"
 role: R&D 3D, outils, développement
 shape: head
-cover: cover-morph.webp
-coverAlt: Tête humaine composée de particules lumineuses
+cover: site-accueil.webp
+coverAlt: "Page d'accueil du site : un ordinateur portable en particules affiche WELCOME"
+slides:
+  - { src: site-accueil.webp, alt: "Accueil : l'ordinateur en particules écrit BIENVENUE puis WELCOME" }
+  - { src: site-logos.webp, alt: "Compétences : les logos des systèmes d'exploitation se transforment l'un en l'autre" }
+  - { src: site-ville.webp, alt: "Projets : la maquette de nuit de Place de Milan et ses propositions de tours" }
+  - { src: site-papillon.webp, alt: "3D et Blender : un papillon en particules qui bat des ailes" }
+  - { src: site-coeur.webp, alt: "Contact : un cœur en particules qui bat derrière le titre" }
 stack: [Three.js, GLSL, Blender + Python, Astro, GSAP]
 skills: [Shaders GPU, Pipeline d'assets 3D, Optimisation des données, Animation d'interface, Accessibilité]
 stats:

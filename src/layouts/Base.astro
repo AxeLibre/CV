@@ -57,7 +57,18 @@ const anchor = (id: string) => (onHome ? `#${id}` : `${home}#${id}`);
     <meta name="twitter:image" content={ogImage} />
     <meta property="og:locale" content={lang === 'fr' ? 'fr_FR' : 'en_US'} />
     <meta name="twitter:card" content="summary_large_image" />
-    <script is:inline>document.documentElement.classList.add('js');</script>
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      // transitions entre pages : si l'on navigue vite, le navigateur les annule
+      // (promesse rejetée) ; c'est attendu, on ne le signale pas comme une erreur
+      ['pageswap', 'pagereveal'].forEach(function (type) {
+        window.addEventListener(type, function (e) {
+          var vt = e.viewTransition;
+          if (!vt) return;
+          [vt.ready, vt.finished, vt.updateCallbackDone].forEach(function (p) { p && p.catch(function () {}); });
+        });
+      });
+    </script>
     <script type="application/ld+json" set:html={JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Person',

@@ -20,8 +20,6 @@ MAGENTA = np.array([255, 63, 216], dtype=np.float64)
 
 COVERS = {
     # nom du fichier : (forme, rotation Y en degrés, rotation X, zoom)
-    "cover-netscan": ("network", 20, 10, 1.4),
-    "cover-morph": ("head", -28, 4, 1.4),
 }
 
 
