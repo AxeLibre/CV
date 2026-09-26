@@ -242,46 +242,7 @@ void main(){
   p.y = mod(p.y + uScroll * speed + uTime * 0.02 * speed + uHeight * 0.5, uHeight) - uHeight * 0.5;
   p.x += sin(uTime * 0.2 + aSeed * 40.0) * 0.05;
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
-  vec4 clip = projectionMatrix * mv;
-
-  // --- Interaction souris / doigt : un flux d'air laissé par le pointeur.
-  //     La traînée est une ligne continue à l'écran (tête = position actuelle du pointeur) ;
-  //     les particules proches sont emportées dans le sens du geste, flottent,
-  //     puis reviennent en place comme sur un ressort très souple.
-  vec2 sp = clip.xy / clip.w;
-  sp.x *= uAspect;
-  vec2 push = vec2(0.0);
-  vec2 burst = vec2(0.0);
-  float fsum = 0.0;
-  float fl = 0.0;
-  for (int i = 0; i < TRAIL - 1; i++) {
-    float w = max(uTrailW[i], uTrailW[i + 1]);
-    if (w < 0.002) continue;
-    vec2 a = uTrail[i].xy;
-    vec2 ab = uTrail[i + 1].xy - a;
-    float h = clamp(dot(sp - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
-    vec2 off = sp - a - ab * h;
-    float dd = length(off);
-    float fall = 1.0 - smoothstep(0.0, uRadius, dd);
-    fall *= fall;
-    float wi = mix(uTrailW[i], uTrailW[i + 1], h);
-    push += mix(uTrail[i].zw, uTrail[i + 1].zw, h) * fall;
-    burst += off / max(dd, 1e-4) * fall * wi;    // chassées de part et d'autre de la trajectoire
-    fsum += fall * wi;
-    fl += fall;
-  }
-  push /= max(fl, 1.0);                         // segments superposés : pas de cumul
-  burst /= max(fl, 1.0);
-  float f = min(fsum, 1.0);
-  float grip = 0.6 + 0.8 * aSeed;               // chaque particule est plus ou moins bousculée
-  // éclatement : poussée vers l'extérieur + direction propre à chaque particule
-  float ang = aSeed * 43.7;
-  push += burst * 0.045 + vec2(cos(ang), sin(ang)) * f * 0.03;
-  if (f > 0.001) push += snoiseVec(vec3(sp * 3.0, uTime * 0.35 + aSeed)).xy * f * 0.018;  // flottement
-  push.x /= uAspect;
-  clip.xy += push * grip * clip.w;
-  gl_Position = clip;
-  vHot = f * 0.4;
+  gl_Position = projectionMatrix * mv;
   gl_PointSize = (1.0 + aSeed * 2.2) * uPixelRatio * 6.0 / -mv.z;
   vAlpha = 0.25 + 0.5 * aSeed;
 }
